@@ -124,6 +124,7 @@ TMDB_API_KEY = os.getenv("TMDB_API_KEY", "")
 TMDB_BASE    = "https://api.themoviedb.org/3/movie/"
 TMDB_IMG     = "https://image.tmdb.org/t/p/w500"
 POSTER_YOK   = "/static/poster_yok.svg"
+print("[TMDB] API key:", "YUKLENDI ✓" if TMDB_API_KEY else "EKSIK — .env dosyasini kontrol et")
 
 try:
     _links = pd.read_csv("links.csv", usecols=["movieId", "imdbId", "tmdbId"])
