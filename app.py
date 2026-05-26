@@ -23,7 +23,8 @@ from sklearn.neighbors import NearestNeighbors
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-in-production")
-CORS(app, supports_credentials=True)
+_allowed_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGIN", "http://localhost:5000").split(",")]
+CORS(app, supports_credentials=True, origins=_allowed_origins)
 
 # Supabase (optional — fill .env to enable)
 try:
@@ -460,7 +461,11 @@ def gecmis():
 
 @app.route("/analiz")
 def analiz():
-    return render_template("analiz.html")
+    yeni_puan = _yeni_rating_sayisi()
+    return render_template("analiz.html",
+        toplam_rating=TOPLAM_RATING_COUNT,
+        yeni_puan=yeni_puan,
+    )
 
 
 @app.route("/oneri", methods=["GET", "POST"])
@@ -470,7 +475,7 @@ def oneri():
         auto = bool(film_adi_param and request.args.get("auto"))
         form_data = {
             "yontem": "knn", "film_adi": film_adi_param,
-            "kullanici_id": "", "tur": "Tümü", "min_puan": "Tümü",
+            "tur": "Tümü", "min_puan": "Tümü",
             "yil_baslangic": "", "yil_bitis": "", "oneri_sayisi": 10,
         }
         return render_template("oneri.html", results=None, error=None,
@@ -478,15 +483,20 @@ def oneri():
 
     yontem        = request.form.get("yontem", "knn")
     film_adi      = request.form.get("film_adi", "").strip()
-    kullanici_id  = request.form.get("kullanici_id", "").strip()
     tur           = request.form.get("tur", "Tümü").strip()
     min_puan_raw  = request.form.get("min_puan", "Tümü").strip()
     yil_baslangic = request.form.get("yil_baslangic", "").strip()
     yil_bitis     = request.form.get("yil_bitis", "").strip()
-    oneri_sayisi  = int(request.form.get("oneri_sayisi", 10))
+    _VALID_ONERI_SAYISI = {5, 10, 15, 20}
+    try:
+        oneri_sayisi = int(request.form.get("oneri_sayisi", 10))
+    except (ValueError, TypeError):
+        oneri_sayisi = 10
+    if oneri_sayisi not in _VALID_ONERI_SAYISI:
+        oneri_sayisi = 10
 
     form = dict(
-        yontem=yontem, film_adi=film_adi, kullanici_id=kullanici_id, tur=tur,
+        yontem=yontem, film_adi=film_adi, tur=tur,
         min_puan=min_puan_raw, yil_baslangic=yil_baslangic,
         yil_bitis=yil_bitis, oneri_sayisi=oneri_sayisi,
     )
@@ -648,6 +658,8 @@ def feedback():
         rating   = float(rating)
     except (ValueError, TypeError):
         return jsonify({"status": "error", "message": "Gecersiz deger"}), 400
+    if not (0.5 <= rating <= 5.0):
+        return jsonify({"status": "error", "message": "Rating 0.5-5.0 arasında olmalı"}), 400
 
     new_row = pd.DataFrame([{
         "userId":    str(session_id),
@@ -817,7 +829,35 @@ def dashboard():
 def profil():
     if not aktif_kullanici():
         return redirect(url_for("giris"))
-    return render_template("profil.html", kullanici=session.get("user_email"))
+    saved_count   = 0
+    history_count = 0
+    algo_counts   = {"knn": 0, "dt": 0, "nb": 0}
+    if SUPABASE_READY:
+        try:
+            saved_count = len(supabase.table("kaydedilen_filmler")
+                              .select("movie_id")
+                              .eq("user_id", aktif_kullanici())
+                              .execute().data)
+        except Exception:
+            pass
+        try:
+            rows = supabase.table("oneri_gecmisi")\
+                .select("algoritma")\
+                .eq("user_id", aktif_kullanici())\
+                .execute().data
+            history_count = len(rows)
+            for r in rows:
+                algo = r.get("algoritma", "")
+                if algo in algo_counts:
+                    algo_counts[algo] += 1
+        except Exception:
+            pass
+    return render_template("profil.html",
+        kullanici=session.get("user_email"),
+        saved_count=saved_count,
+        history_count=history_count,
+        algo_counts=algo_counts,
+    )
 
 
 @app.route("/sistem-durumu")

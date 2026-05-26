@@ -35,6 +35,43 @@
             </div>
           </div>
 
+          <!-- Kullanıcı İstatistikleri -->
+          <div class="form-section-title" style="margin-bottom:16px">İstatistikler</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:32px">
+            <div class="card" style="padding:16px 18px;text-align:center">
+              <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;color:var(--gold)">{{ saved_count }}</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:4px">Kaydedilen Film</div>
+            </div>
+            <div class="card" style="padding:16px 18px;text-align:center">
+              <div style="font-size:26px;font-weight:800;letter-spacing:-0.02em;color:var(--gold)">{{ history_count }}</div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:4px">Öneri Sorgusu</div>
+            </div>
+            <div class="card" style="padding:16px 18px;text-align:center">
+              {% set fav = algo_counts.items()|sort(attribute='1',reverse=true)|first %}
+              <div style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:var(--gold);font-family:'JetBrains Mono',monospace">
+                {{ fav[0]|upper if history_count > 0 else '—' }}
+              </div>
+              <div style="font-size:12px;color:var(--text-3);margin-top:4px">Favori Algoritma</div>
+            </div>
+          </div>
+
+          <!-- Algoritma dağılımı -->
+          {% if history_count > 0 %}
+          <div style="margin-bottom:32px">
+            {% for algo, count in [('knn', algo_counts.knn), ('dt', algo_counts.dt), ('nb', algo_counts.nb)] %}
+            {% set pct = ((count / history_count) * 100)|round(1) %}
+            {% set color = 'var(--gold)' if algo == 'knn' else ('var(--success)' if algo == 'dt' else 'var(--purple)') %}
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:{{ color }};width:32px">{{ algo|upper }}</span>
+              <div style="flex:1;height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden">
+                <div style="height:100%;width:{{ pct }}%;background:{{ color }};border-radius:99px;transition:width 0.8s ease"></div>
+              </div>
+              <span style="font-size:12px;color:var(--text-3);width:36px;text-align:right">{{ count }}</span>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
           <div class="form-section-title">Hesap Seçenekleri</div>
           
           <div style="display:flex; flex-direction:column; gap:16px;">

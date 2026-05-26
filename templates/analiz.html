@@ -25,7 +25,7 @@
       <div class="metric-grid">
         <div class="card card-hover metric-card">
           <div class="metric-label"><span class="dot"></span> Toplam Rating</div>
-          <div class="metric-value mono">32,000,204</div>
+          <div class="metric-value mono">{{ '{:,}'.format(toplam_rating) }}</div>
           <div class="metric-sub">ml-32m full dataset</div>
         </div>
         <div class="card card-hover metric-card">
@@ -39,9 +39,9 @@
           <div class="metric-sub">rated movies</div>
         </div>
         <div class="card card-hover metric-card">
-          <div class="metric-label"><span class="dot"></span> Ortalama Rating</div>
-          <div class="metric-value mono">3.54 <span class="star">★</span></div>
-          <div class="metric-sub">population mean</div>
+          <div class="metric-label"><span class="dot"></span> Kullanıcı Geri Bildirimi</div>
+          <div class="metric-value mono pulse" id="analiz-yeni-puan">{{ yeni_puan }}</div>
+          <div class="metric-sub">yeni puan kaydı</div>
         </div>
       </div>
     </section>
