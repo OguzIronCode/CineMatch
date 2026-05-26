@@ -119,7 +119,7 @@ _egitim_durumu = {"son_egitim": None, "egitiliyor": False}
 # ---------------------------------------------------------------------------
 # TMDB poster lookup
 # ---------------------------------------------------------------------------
-TMDB_API_KEY = "f9ff3f80297a9760b16c9c30f6a2feac"
+TMDB_API_KEY = os.getenv("TMDB_API_KEY", "")
 TMDB_BASE    = "https://api.themoviedb.org/3/movie/"
 TMDB_IMG     = "https://image.tmdb.org/t/p/w500"
 POSTER_YOK   = "/static/poster_yok.svg"
