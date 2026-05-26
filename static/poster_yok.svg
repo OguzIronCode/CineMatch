@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 420" width="280" height="420">
+  <rect width="280" height="420" fill="#141824"/>
+  <rect x="1" y="1" width="278" height="418" fill="none" stroke="#1F2937" stroke-width="2"/>
+  <circle cx="140" cy="195" r="52" fill="#1A1F2E" stroke="#2A3344" stroke-width="2"/>
+  <polygon points="125,168 125,222 175,195" fill="#2A3344"/>
+  <text x="140" y="280" text-anchor="middle" fill="#6B7280" font-size="16" font-family="system-ui,sans-serif" font-weight="500">Afis Yok</text>
+  <text x="140" y="300" text-anchor="middle" fill="#374151" font-size="12" font-family="system-ui,sans-serif">Poster Unavailable</text>
+</svg>

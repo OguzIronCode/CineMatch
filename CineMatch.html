@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CineMatch — Film Öneri Sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0A0E1A;
+    --surface: #141824;
+    --surface-2: #1A1F2E;
+    --gold: #F5C518;
+    --gold-soft: rgba(245, 197, 24, 0.12);
+    --gold-strong: rgba(245, 197, 24, 0.35);
+    --text: #FFFFFF;
+    --text-2: #9BA3AF;
+    --text-3: #6B7280;
+    --success: #10B981;
+    --success-soft: rgba(16, 185, 129, 0.12);
+    --border: #1F2937;
+    --border-soft: #161B26;
+    --blue: #3B82F6;
+    --green: #10B981;
+    --purple: #8B5CF6;
+    --red: #EF4444;
+    --orange: #F59E0B;
+    --pink: #EC4899;
+    --cyan: #06B6D4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  ::selection { background: var(--gold); color: #000; }
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: #1F2937; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #2A3344; }
+
+  /* utility */
+  .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* App layout */
+  .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 0 32px; width: 100%; }
+
+  /* NAV */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(10, 14, 26, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 19px; letter-spacing: -0.02em;
+    cursor: pointer; user-select: none;
+  }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--gold);
+    display: grid; place-items: center;
+    color: #0A0E1A; font-weight: 900; font-size: 18px;
+    box-shadow: 0 6px 20px -6px var(--gold-strong);
+  }
+  .nav-links { display: flex; gap: 6px; align-items: center; }
+  .nav-link {
+    padding: 8px 14px; border-radius: 8px;
+    color: var(--text-2); font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all 160ms ease;
+    background: transparent; border: none; font-family: inherit;
+  }
+  .nav-link:hover { color: var(--text); background: var(--surface); }
+  .nav-link.active {
+    color: var(--gold); background: var(--gold-soft);
+  }
+  .nav-cta {
+    padding: 8px 14px; border-radius: 8px;
+    background: var(--gold); color: #0A0E1A;
+    font-weight: 600; font-size: 14px;
+    cursor: pointer; border: none; font-family: inherit;
+    transition: all 160ms ease;
+  }
+  .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 8px 22px -8px var(--gold-strong); }
+
+  /* generic */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: border-color 200ms ease, transform 200ms ease, box-shadow 200ms ease;
+  }
+  .card-hover:hover {
+    border-color: #2A3344;
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px -16px rgba(0,0,0,0.6);
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 22px; border-radius: 8px;
+    font-weight: 600; font-size: 15px;
+    cursor: pointer; border: 1px solid transparent;
+    transition: all 180ms ease; font-family: inherit;
+  }
+  .btn-primary {
+    background: var(--gold); color: #0A0E1A;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -10px var(--gold-strong); }
+  .btn-outline {
+    background: transparent; color: var(--text);
+    border-color: var(--border);
+  }
+  .btn-outline:hover { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 999px;
+    background: var(--gold-soft); color: var(--gold);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    border: 1px solid var(--gold-strong);
+  }
+  .eyebrow .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--gold);
+    box-shadow: 0 0 10px var(--gold);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .section-title {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.02em;
+    margin: 0 0 6px 0;
+  }
+  .section-sub { color: var(--text-2); font-size: 15px; margin: 0 0 24px 0; }
+
+  /* HERO */
+  .hero {
+    position: relative;
+    padding: 96px 0 64px 0;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(245,197,24,0.10), transparent 70%),
+      radial-gradient(ellipse 40% 30% at 20% 80%, rgba(59,130,246,0.06), transparent 70%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0; opacity: 0.35; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 75%);
+  }
+  .hero-inner { position: relative; text-align: center; max-width: 820px; margin: 0 auto; }
+  .hero h1 {
+    font-size: clamp(54px, 7vw, 88px);
+    font-weight: 800; letter-spacing: -0.04em; line-height: 0.98;
+    margin: 22px 0 16px 0;
+  }
+  .hero h1 .accent {
+    background: linear-gradient(180deg, #F5C518 0%, #E0A800 100%);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    font-size: 20px; color: var(--text-2); font-weight: 500;
+    margin: 0 0 14px 0;
+  }
+  .hero-desc {
+    font-size: 15px; color: var(--text-2); line-height: 1.65;
+    max-width: 580px; margin: 0 auto 36px auto;
+  }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* INFO CARDS */
+  .info-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    padding: 8px 0 24px 0;
+  }
+  @media (max-width: 880px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-card {
+    padding: 28px;
+    display: flex; flex-direction: column; gap: 18px;
+    position: relative; overflow: hidden;
+  }
+  .info-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-strong), transparent);
+    opacity: 0; transition: opacity 200ms ease;
+  }
+  .info-card:hover::before { opacity: 1; }
+  .info-icon {
+    width: 48px; height: 48px; border-radius: 10px;
+    background: var(--gold-soft); color: var(--gold);
+    display: grid; place-items: center;
+    border: 1px solid var(--gold-strong);
+  }
+  .info-label { font-size: 13px; color: var(--text-2); font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; }
+  .info-value { font-size: 36px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+  .info-sub { font-size: 13px; color: var(--text-2); margin-top: 4px; }
+
+  /* PROJE HAKKINDA */
+  .about-section { padding: 64px 0 32px 0; }
+  .about-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+    margin-top: 24px;
+  }
+  @media (max-width: 760px) { .about-grid { grid-template-columns: 1fr; } }
+  .about-item {
+    padding: 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .about-key { font-size: 13px; color: var(--text-2); font-weight: 500; }
+  .about-val { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+  .about-val .muted { color: var(--text-2); font-weight: 500; font-size: 13px; }
+
+  /* PURPOSE CARD */
+  .purpose-card { padding: 32px 36px; margin-top: 24px; position: relative; overflow: hidden; }
+  .purpose-card::after {
+    content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, var(--gold), transparent);
+  }
+  .purpose-card p { color: var(--text-2); font-size: 16px; line-height: 1.75; margin: 0; max-width: 880px; }
+  .purpose-card p b { color: var(--text); font-weight: 600; }
+
+  /* TABLES */
+  .table-wrap { border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); }
+  table.films { width: 100%; border-collapse: collapse; font-size: 14px; }
+  table.films thead th {
+    background: var(--surface-2); color: var(--text-2);
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--border);
+  }
+  table.films tbody td { padding: 14px 18px; border-bottom: 1px solid var(--border-soft); vertical-align: middle; }
+  table.films tbody tr:last-child td { border-bottom: none; }
+  table.films tbody tr { transition: background 140ms ease; }
+  table.films tbody tr:nth-child(even) { background: rgba(255,255,255,0.012); }
+  table.films tbody tr:hover { background: var(--gold-soft); }
+  .rank-cell { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--gold); width: 56px; }
+  .film-name { font-weight: 600; color: var(--text); }
+  .film-name .yr { color: var(--text-3); font-weight: 500; margin-left: 6px; font-size: 13px; }
+  .genres-cell { color: var(--text-2); font-size: 13px; }
+  .count-cell { font-family: 'JetBrains Mono', monospace; font-weight: 600; text-align: right; width: 140px; }
+  .avg-cell { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--gold); text-align: right; width: 90px; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: auto;
+    padding: 36px 0;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--text-3); font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  /* PAGE 2 */
+  .page-header { padding: 56px 0 24px 0; }
+  .metric-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+    margin: 16px 0 56px 0;
+  }
+  @media (max-width: 980px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .metric-grid { grid-template-columns: 1fr; } }
+  .metric-card { padding: 22px 22px 20px 22px; }
+  .metric-label {
+    font-size: 12px; color: var(--text-2); letter-spacing: 0.08em;
+    text-transform: uppercase; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .metric-label .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+  .metric-value { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; margin: 12px 0 0 0; }
+  .metric-value .star { color: var(--gold); margin-left: 4px; }
+  .metric-sub { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+  /* Rating Distribution */
+  .chart-card { padding: 32px; margin-bottom: 56px; }
+  .chart-row { display: flex; align-items: center; gap: 16px; padding: 6px 0; }
+  .chart-label {
+    width: 64px; flex-shrink: 0;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--text-2);
+    display: flex; align-items: center; gap: 4px;
+  }
+  .chart-label .s { color: var(--gold); }
+  .chart-bar-wrap {
+    flex: 1; height: 28px; background: var(--surface-2);
+    border-radius: 6px; overflow: hidden; position: relative;
+    border: 1px solid var(--border-soft);
+  }
+  .chart-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #2A3344, #3B4658);
+    border-radius: 5px;
+    transition: width 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+  }
+  .chart-bar.gold {
+    background: linear-gradient(90deg, #F5C518, #E0A800);
+    box-shadow: 0 0 24px rgba(245,197,24,0.25);
+  }
+  .chart-value {
+    width: 70px; flex-shrink: 0; text-align: right;
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600;
+  }
+  .chart-value.gold { color: var(--gold); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 32px; margin-top: 8px; }
+  .timeline::before {
+    content: ''; position: absolute; left: 11px; top: 8px; bottom: 60px;
+    width: 2px; background: var(--border);
+  }
+  .timeline-step { position: relative; padding-bottom: 28px; }
+  .timeline-step::before {
+    content: ''; position: absolute; left: -32px; top: 4px;
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--surface); border: 2px solid var(--gold);
+    box-shadow: 0 0 0 4px rgba(245,197,24,0.10);
+  }
+  .timeline-step::after {
+    content: attr(data-step); position: absolute; left: -28px; top: 6px;
+    width: 16px; text-align: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--gold);
+  }
+  .timeline-title { font-size: 16px; font-weight: 600; margin: 0 0 6px 0; }
+  .timeline-desc { font-size: 14px; color: var(--text-2); margin: 0; }
+  .timeline-desc .mono { color: var(--text); }
+  .timeline-final {
+    margin-top: 8px;
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 10px 18px; border-radius: 10px;
+    background: var(--success-soft); border: 1px solid rgba(16,185,129,0.35);
+    color: var(--success); font-weight: 600; font-size: 14px;
+  }
+
+  /* Validation cards */
+  .validation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 780px) { .validation-grid { grid-template-columns: 1fr; } }
+  .val-card { padding: 28px; }
+  .val-title { font-size: 14px; color: var(--text-2); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+  .val-stats { display: flex; gap: 28px; margin: 18px 0 22px 0; flex-wrap: wrap; }
+  .val-stat-label { font-size: 12px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+  .val-stat-value { font-size: 22px; font-weight: 700; margin-top: 4px; font-family: 'JetBrains Mono', monospace; }
+  .pass-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 8px;
+    background: var(--success); color: #052e21;
+    font-weight: 700; font-size: 14px; letter-spacing: 0.04em;
+  }
+
+  /* PAGE 3 */
+  .recform-card { padding: 32px; margin: 8px 0 40px 0; }
+  .form-section-title {
+    font-size: 16px; font-weight: 700; letter-spacing: -0.01em;
+    margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;
+  }
+  .form-section-title::before {
+    content: ''; width: 3px; height: 16px; background: var(--gold); border-radius: 2px;
+  }
+  .form-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    margin-bottom: 14px;
+  }
+  .form-row-single { display: grid; grid-template-columns: 1fr; margin-bottom: 14px; max-width: 280px; }
+  @media (max-width: 560px) { .form-row { grid-template-columns: 1fr; } }
+  .form-submit-row {
+    display: flex; justify-content: center; margin-top: 24px;
+  }
+  .field-label {
+    display: block;
+    font-size: 12px; color: var(--text-2); font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .field-input, .field-select {
+    width: 100%;
+    background: var(--surface-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-size: 14px; font-family: inherit;
+    transition: border-color 160ms ease;
+    appearance: none; -webkit-appearance: none;
+  }
+  .field-input::placeholder { color: var(--text-3); }
+  .field-input:focus, .field-select:focus { outline: none; border-color: var(--gold); }
+  .field-select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239BA3AF' stroke-width='2.5'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat; background-position: right 14px center;
+    padding-right: 36px; cursor: pointer;
+  }
+  .submit-btn {
+    background: var(--gold); color: #0A0E1A;
+    border: none; border-radius: 10px;
+    padding: 16px 36px; font-size: 16px; font-weight: 700;
+    cursor: pointer; transition: all 160ms ease; font-family: inherit;
+    white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 10px;
+    letter-spacing: 0.01em;
+  }
+  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 12px 28px -10px var(--gold-strong); }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .results-header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 16px 0 20px 0; flex-wrap: wrap; }
+  .results-count { color: var(--text-2); font-size: 14px; font-family: 'JetBrains Mono', monospace; }
+
+  .film-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 780px) { .film-grid { grid-template-columns: 1fr; } }
+  .film-card {
+    padding: 22px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .film-rank {
+    position: absolute; top: 18px; right: 22px;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text-3); font-weight: 600;
+  }
+  .film-title-row { display: flex; align-items: flex-start; gap: 12px; padding-right: 32px; }
+  .film-title { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25; margin: 0; }
+  .film-year { color: var(--text-3); font-weight: 500; font-size: 14px; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+    border: 1px solid transparent;
+  }
+  .b-action   { background: rgba(59,130,246,0.12); color: #60A5FA; border-color: rgba(59,130,246,0.25); }
+  .b-comedy   { background: rgba(16,185,129,0.12); color: #34D399; border-color: rgba(16,185,129,0.25); }
+  .b-drama    { background: rgba(139,92,246,0.12); color: #A78BFA; border-color: rgba(139,92,246,0.25); }
+  .b-horror   { background: rgba(239,68,68,0.12); color: #F87171; border-color: rgba(239,68,68,0.25); }
+  .b-scifi    { background: rgba(6,182,212,0.12); color: #22D3EE; border-color: rgba(6,182,212,0.25); }
+  .b-animation{ background: rgba(245,158,11,0.12); color: #FBBF24; border-color: rgba(245,158,11,0.25); }
+  .b-thriller { background: rgba(236,72,153,0.12); color: #F472B6; border-color: rgba(236,72,153,0.25); }
+  .b-romance  { background: rgba(244,114,182,0.12); color: #FB7185; border-color: rgba(244,114,182,0.25); }
+  .b-adventure{ background: rgba(34,197,94,0.12); color: #4ADE80; border-color: rgba(34,197,94,0.25); }
+  .b-crime    { background: rgba(148,163,184,0.12); color: #CBD5E1; border-color: rgba(148,163,184,0.25); }
+  .b-fantasy  { background: rgba(168,85,247,0.12); color: #C084FC; border-color: rgba(168,85,247,0.25); }
+  .b-mystery  { background: rgba(99,102,241,0.12); color: #818CF8; border-color: rgba(99,102,241,0.25); }
+
+  .similarity-row { display: flex; align-items: center; gap: 12px; }
+  .sim-label { font-size: 11px; color: var(--text-2); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; min-width: 78px; }
+  .sim-bar { flex: 1; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-soft); }
+  .sim-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #F5C518, #E0A800);
+    border-radius: 4px;
+    transition: width 700ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .sim-pct { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--gold); min-width: 44px; text-align: right; }
+
+  .rating-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .stars { display: flex; gap: 2px; align-items: center; }
+  .star-svg { width: 14px; height: 14px; }
+  .rating-num { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; color: var(--text); }
+  .reason {
+    font-size: 13px; color: var(--text-2); line-height: 1.5;
+    padding: 12px 14px; border-radius: 8px;
+    background: var(--surface-2); border: 1px solid var(--border-soft);
+  }
+  .reason b { color: var(--gold); font-weight: 600; }
+
+  .algo-banner {
+    margin: 32px 0 24px 0;
+    padding: 20px 24px; border-radius: 12px;
+    background: linear-gradient(135deg, rgba(245,197,24,0.06), rgba(245,197,24,0.02));
+    border: 1px solid var(--gold-strong);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .algo-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--gold-soft); color: var(--gold);
+    display: grid; place-items: center; flex-shrink: 0;
+    border: 1px solid var(--gold-strong);
+  }
+  .algo-text { font-size: 14px; color: var(--text); line-height: 1.55; }
+  .algo-text .mono { color: var(--gold); font-weight: 600; }
+
+  .empty-state {
+    padding: 56px 32px; text-align: center;
+    color: var(--text-2); font-size: 15px;
+    border: 1px dashed var(--border); border-radius: 12px;
+    background: rgba(255,255,255,0.01);
+  }
+  .empty-state .icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+
+  /* Loading shimmer */
+  .skeleton {
+    height: 180px; border-radius: 12px;
+    background: linear-gradient(90deg, var(--surface) 0%, #1A1F2E 50%, var(--surface) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  /* page transitions */
+  .page-enter { animation: pageIn 320ms ease both; }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+// ========== ICONS ==========
+const Icon = {
+  Database: (p) => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6"/></svg>),
+  Users: (p) => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>),
+  Film: (p) => (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>),
+  Sparkles: (p) => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7z"/><path d="M19 17l.7 1.7L21 19l-1.3.6L19 21l-.7-1.4L17 19l1.3-.6z"/></svg>),
+  BarChart: (p) => (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>),
+  ArrowRight: (p) => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>),
+  Check: (p) => (<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}><polyline points="20 6 9 17 4 12"/></svg>),
+  Cpu: (p) => (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>),
+  Search: (p) => (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>),
+};
+
+const Star = ({ filled = true, half = false, size = 14 }) => {
+  if (half) {
+    return (
+      <svg className="star-svg" width={size} height={size} viewBox="0 0 24 24">
+        <defs>
+          <linearGradient id={`half-${Math.random()}`} x1="0" y1="0" x2="1" y2="0">
+            <stop offset="50%" stopColor="#F5C518" />
+            <stop offset="50%" stopColor="#2A3344" />
+          </linearGradient>
+        </defs>
+        <path fill="#F5C518" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>
+        <path fill="#2A3344" d="M12 2v15.77l6.18 3.25L17 14.14l5-4.87-6.91-1.01z"/>
+      </svg>
+    );
+  }
+  return (
+    <svg className="star-svg" viewBox="0 0 24 24" fill={filled ? '#F5C518' : '#2A3344'}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/>
+    </svg>
+  );
+};
+
+const StarRow = ({ rating }) => {
+  const full = Math.floor(rating);
+  const hasHalf = rating - full >= 0.25 && rating - full < 0.75;
+  const adj = rating - full >= 0.75 ? full + 1 : full;
+  return (
+    <div className="stars">
+      {[0,1,2,3,4].map(i => {
+        if (i < adj) return <Star key={i} filled />;
+        if (i === adj && hasHalf) return <Star key={i} half />;
+        return <Star key={i} filled={false} />;
+      })}
+    </div>
+  );
+};
+
+// ========== NAV ==========
+const NAV = [
+  { id: 'home',  label: 'Ana Sayfa' },
+  { id: 'data',  label: 'Veri Seti Analizi' },
+  { id: 'recs',  label: 'Film Önerisi' },
+];
+
+function Nav({ page, setPage }) {
+  return (
+    <nav className="nav">
+      <div className="container nav-inner">
+        <div className="logo" onClick={() => setPage('home')}>
+          <div className="logo-mark">C</div>
+          <span>CineMatch</span>
+        </div>
+        <div className="nav-links">
+          {NAV.map(n => (
+            <button key={n.id}
+              className={`nav-link ${page === n.id ? 'active' : ''}`}
+              onClick={() => setPage(n.id)}>
+              {n.label}
+            </button>
+          ))}
+          <button className="nav-cta" onClick={() => setPage('recs')}>
+            <Icon.Sparkles /> Hemen Dene
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+// ========== HOME ==========
+function HomePage({ setPage }) {
+  return (
+    <div className="page-enter">
+      <section className="hero">
+        <div className="hero-bg" />
+        <div className="hero-grid" />
+        <div className="container hero-inner">
+          <span className="eyebrow"><span className="dot" /> KNN · Cosine Similarity · MovieLens ml-32m</span>
+          <h1>Doğru filmi bulmanın <span className="accent">akıllı yolu</span></h1>
+          <p className="hero-sub">Yapay Zeka Destekli Film Öneri Sistemi</p>
+          <p className="hero-desc">
+            MovieLens ml-32m veri seti üzerinde KNN algoritması kullanılarak geliştirilmiş
+            kişiselleştirilmiş film öneri sistemi. 32 milyon rating'lik veri,
+            stratified sampling ile %15'lik temsili örnekleme indirilmiş ve
+            Kolmogorov-Smirnov testi (p=1.0000) ile istatistiksel olarak doğrulanmıştır.
+          </p>
+          <div className="hero-cta">
+            <button className="btn btn-primary" onClick={() => setPage('recs')}>
+              <Icon.Sparkles /> Film Önerisi Al
+            </button>
+            <button className="btn btn-outline" onClick={() => setPage('data')}>
+              <Icon.BarChart /> Veri Analizi
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="container">
+        <div className="info-grid">
+          <div className="card card-hover info-card">
+            <div className="info-icon"><Icon.Database /></div>
+            <div>
+              <div className="info-label">Veri Seti</div>
+              <div className="info-value">32M <span style={{fontSize:18, color:'var(--text-2)', fontWeight:600}}>Rating</span></div>
+              <div className="info-sub">MovieLens ml-32m</div>
+            </div>
+          </div>
+          <div className="card card-hover info-card">
+            <div className="info-icon"><Icon.Users /></div>
+            <div>
+              <div className="info-label">Kullanıcı</div>
+              <div className="info-value">200,948</div>
+              <div className="info-sub">Aktif kullanıcı</div>
+            </div>
+          </div>
+          <div className="card card-hover info-card">
+            <div className="info-icon"><Icon.Film /></div>
+            <div>
+              <div className="info-label">Film</div>
+              <div className="info-value">87,585</div>
+              <div className="info-sub">Benzersiz film</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="container about-section">
+        <h2 className="section-title">Proje Hakkında</h2>
+        <p className="section-sub">Veri Madenciliği dersi kapsamında geliştirilen, KNN tabanlı içerik filtreleme sistemi.</p>
+        <div className="about-grid">
+          <AboutItem k="Kullanılan Algoritma" v="KNN" muted="(K-Nearest Neighbors)" />
+          <AboutItem k="Örnekleme Yöntemi" v="Stratified" muted="%15 — 4.7M satır" />
+          <AboutItem k="Doğrulama Yöntemi" v="KS Testi" muted="Kolmogorov-Smirnov" />
+          <AboutItem k="KS Sonucu" v="D=0.0037" muted="p=1.0000 ✓" />
+        </div>
+      </section>
+
+      <section className="container" style={{ paddingBottom: 24 }}>
+        <h2 className="section-title">Projenin Amacı</h2>
+        <p className="section-sub">Veri Madenciliği dersi proje hedefi ve metodolojisi.</p>
+        <div className="card purpose-card">
+          <p>
+            Bu proje, kullanıcıların <b>geçmiş film puanlama davranışlarını analiz ederek</b> kişiselleştirilmiş
+            film önerileri sunmayı amaçlamaktadır. <b>KNN (K-Nearest Neighbors)</b> algoritması kullanılarak benzer
+            kullanıcı profilleri tespit edilmekte ve bu profiller doğrultusunda <b>cosine similarity</b> ile
+            sıralanmış film önerileri üretilmektedir. Cold-start probleminden kaçınmak için 20'den az puanlama yapan
+            kullanıcılar ve 10'dan az puan alan filmler veri setinden çıkarılmıştır.
+          </p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function AboutItem({ k, v, muted }) {
+  return (
+    <div className="card card-hover about-item">
+      <div className="about-key">{k}</div>
+      <div className="about-val">{v} <span className="muted">{muted}</span></div>
+    </div>
+  );
+}
+
+// ========== DATA PAGE ==========
+const RATING_DIST = [
+  { label: '0.5', pct: 1.6 },
+  { label: '1.0', pct: 3.0 },
+  { label: '1.5', pct: 1.7 },
+  { label: '2.0', pct: 6.3 },
+  { label: '2.5', pct: 5.3 },
+  { label: '3.0', pct: 18.9 },
+  { label: '3.5', pct: 13.4 },
+  { label: '4.0', pct: 26.1, gold: true },
+  { label: '4.5', pct: 9.3 },
+  { label: '5.0', pct: 14.4 },
+];
+
+const MOST_RATED = [
+  { t: 'Forrest Gump', y: 1994, g: 'Comedy / Drama / Romance / War', c: 81491 },
+  { t: 'Shawshank Redemption, The', y: 1994, g: 'Crime / Drama', c: 79672 },
+  { t: 'Pulp Fiction', y: 1994, g: 'Crime / Drama / Thriller', c: 77638 },
+  { t: 'Silence of the Lambs, The', y: 1991, g: 'Crime / Drama / Horror / Thriller', c: 74127 },
+  { t: 'Matrix, The', y: 1999, g: 'Action / Sci-Fi / Thriller', c: 72649 },
+  { t: 'Star Wars: Episode IV — A New Hope', y: 1977, g: 'Action / Adventure / Sci-Fi', c: 68791 },
+  { t: 'Jurassic Park', y: 1993, g: 'Action / Adventure / Sci-Fi / Thriller', c: 64144 },
+  { t: 'Braveheart', y: 1995, g: 'Action / Drama / War', c: 63782 },
+  { t: 'Terminator 2: Judgment Day', y: 1991, g: 'Action / Sci-Fi', c: 63439 },
+  { t: 'Schindler’s List', y: 1993, g: 'Drama / War', c: 61200 },
+];
+
+const HIGHEST_RATED = [
+  { t: 'Shawshank Redemption, The', y: 1994, g: 'Crime / Drama', avg: 4.43, c: 79672 },
+  { t: 'Godfather, The', y: 1972, g: 'Crime / Drama', avg: 4.37, c: 52914 },
+  { t: 'Schindler’s List', y: 1993, g: 'Drama / War', avg: 4.30, c: 61200 },
+  { t: 'Rear Window', y: 1954, g: 'Mystery / Thriller', avg: 4.28, c: 18421 },
+  { t: 'Casablanca', y: 1942, g: 'Drama / Romance / War', avg: 4.27, c: 22910 },
+  { t: 'City of God', y: 2002, g: 'Action / Crime / Drama / Thriller', avg: 4.26, c: 19833 },
+  { t: 'Dr. Strangelove', y: 1964, g: 'Comedy / War', avg: 4.25, c: 24617 },
+  { t: 'Usual Suspects, The', y: 1995, g: 'Crime / Mystery / Thriller', avg: 4.24, c: 47922 },
+  { t: 'Silence of the Lambs, The', y: 1991, g: 'Crime / Drama / Horror', avg: 4.23, c: 74127 },
+  { t: '12 Angry Men', y: 1957, g: 'Drama', avg: 4.22, c: 16348 },
+];
+
+function fmt(n) { return n.toLocaleString('en-US'); }
+
+const STEPS = [
+  { title: 'Ham Veri Örnekleme', desc: '32,000,204 → 4,800,026 satır', meta: 'Stratified Sampling ile %15 oranında katmanlı örnekleme yapıldı.' },
+  { title: 'Geçersiz Rating Temizliği', desc: 'Silinen satır: 0', meta: '0.5–5.0 aralığı dışındaki değerler ve boş kayıtlar silindi.' },
+  { title: 'Duplikasyon Temizliği', desc: 'Silinen satır: 0', meta: 'Aynı kullanıcının aynı filmi tekrar puanladığı kayıtlar silindi.' },
+  { title: 'Cold-start Filtresi', desc: 'Silinen satır: 92,481', meta: "20'den az rating veren kullanıcılar ve 10'dan az puanlanan filmler çıkarıldı." },
+];
+
+function DataPage() {
+  const [animated, setAnimated] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setAnimated(true), 80);
+    return () => clearTimeout(t);
+  }, []);
+  const maxPct = Math.max(...RATING_DIST.map(r => r.pct));
+
+  return (
+    <div className="page-enter">
+      <section className="container page-header">
+        <span className="eyebrow"><span className="dot" /> Exploratory Data Analysis</span>
+        <h1 className="section-title" style={{ fontSize: 44, marginTop: 16 }}>Veri Seti Analizi</h1>
+        <p className="section-sub" style={{ fontSize: 16 }}>
+          MovieLens ml-32m üzerinden alınan örneklemin istatistiksel özeti, dağılımı ve temizleme süreci.
+        </p>
+
+        <div className="metric-grid">
+          <Metric label="Toplam Rating" value="32,000,204" sub="ml-32m full dataset" />
+          <Metric label="Kullanıcı Sayısı" value="200,948" sub="active users" />
+          <Metric label="Film Sayısı" value="84,432" sub="rated movies" />
+          <Metric label="Ortalama Rating" value="3.54" star sub="population mean" />
+        </div>
+      </section>
+
+      <section className="container">
+        <h2 className="section-title" style={{ fontSize: 22 }}>Rating Dağılımı</h2>
+        <p className="section-sub">Yüzdelik olarak rating sınıflarının frekansı — 4.0 puanı en sık verilen değer.</p>
+        <div className="card chart-card">
+          {RATING_DIST.map((r, i) => (
+            <div className="chart-row" key={r.label}>
+              <div className="chart-label">{r.label}<span className="s">★</span></div>
+              <div className="chart-bar-wrap">
+                <div
+                  className={`chart-bar ${r.gold ? 'gold' : ''}`}
+                  style={{ width: animated ? `${(r.pct / maxPct) * 100}%` : '0%', transitionDelay: `${i * 50}ms` }}
+                />
+              </div>
+              <div className={`chart-value ${r.gold ? 'gold' : ''}`}>%{r.pct.toFixed(1)}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="container">
+        <h2 className="section-title" style={{ fontSize: 22 }}>En Çok Puanlanan 10 Film</h2>
+        <p className="section-sub">Rating sayısına göre top 10 — 90'ların drama'ları listenin başında.</p>
+        <div className="table-wrap" style={{ marginBottom: 56 }}>
+          <table className="films">
+            <thead>
+              <tr>
+                <th style={{ width: 56 }}>Sıra</th>
+                <th>Film Adı</th>
+                <th>Tür</th>
+                <th style={{ textAlign: 'right' }}>Puanlama Sayısı</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MOST_RATED.map((m, i) => (
+                <tr key={i}>
+                  <td className="rank-cell">#{i + 1}</td>
+                  <td className="film-name">{m.t} <span className="yr">({m.y})</span></td>
+                  <td className="genres-cell">{m.g}</td>
+                  <td className="count-cell">{fmt(m.c)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="container">
+        <h2 className="section-title" style={{ fontSize: 22 }}>En Yüksek Ortalamaya Sahip 10 Film</h2>
+        <p className="section-sub">Cold-start filtresi sonrası ortalama puana göre sıralama.</p>
+        <div className="table-wrap" style={{ marginBottom: 56 }}>
+          <table className="films">
+            <thead>
+              <tr>
+                <th style={{ width: 56 }}>Sıra</th>
+                <th>Film Adı</th>
+                <th>Tür</th>
+                <th style={{ textAlign: 'right' }}>Ort. Puan</th>
+                <th style={{ textAlign: 'right' }}>Puanlama Sayısı</th>
+              </tr>
+            </thead>
+            <tbody>
+              {HIGHEST_RATED.map((m, i) => (
+                <tr key={i}>
+                  <td className="rank-cell">#{i + 1}</td>
+                  <td className="film-name">{m.t} <span className="yr">({m.y})</span></td>
+                  <td className="genres-cell">{m.g}</td>
+                  <td className="avg-cell">★ {m.avg.toFixed(2)}</td>
+                  <td className="count-cell">{fmt(m.c)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="container">
+        <h2 className="section-title" style={{ fontSize: 22 }}>Veri Temizleme Süreci</h2>
+        <p className="section-sub">4 aşamalı pipeline ile 32M satır → 4.7M temiz satır.</p>
+        <div className="card" style={{ padding: 32 }}>
+          <div className="timeline">
+            {STEPS.map((s, i) => (
+              <div className="timeline-step" key={i} data-step={i + 1}>
+                <p className="timeline-title">{s.title}</p>
+                <p className="timeline-desc">{s.meta}</p>
+                <p className="timeline-desc" style={{ marginTop: 4 }}><span className="mono">{s.desc}</span></p>
+              </div>
+            ))}
+            <div className="timeline-final">
+              <Icon.Check /> Temiz Veri: <span className="mono">4,707,545</span> satır &middot; <span className="mono">30,575</span> kullanıcı &middot; <span className="mono">14,787</span> film
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="container" style={{ paddingBottom: 64, paddingTop: 56 }}>
+        <h2 className="section-title" style={{ fontSize: 22 }}>Örneklem Doğrulama</h2>
+        <p className="section-sub">İki yöntemle örneklemin orijinal popülasyonu temsil ettiğini doğruladık.</p>
+        <div className="validation-grid">
+          <div className="card val-card">
+            <div className="val-title">KS Testi Sonucu</div>
+            <div className="val-stats">
+              <div>
+                <div className="val-stat-label">D istatistiği</div>
+                <div className="val-stat-value">0.0037</div>
+              </div>
+              <div>
+                <div className="val-stat-label">p-değeri</div>
+                <div className="val-stat-value">1.0000</div>
+              </div>
+              <div>
+                <div className="val-stat-label">α</div>
+                <div className="val-stat-value">0.05</div>
+              </div>
+            </div>
+            <div className="pass-badge"><Icon.Check /> GEÇTİ</div>
+            <p style={{ color: 'var(--text-2)', fontSize: 13, marginTop: 16, marginBottom: 0, lineHeight: 1.6 }}>
+              p {'>'} α olduğundan H₀ reddedilemez. Örneklem, popülasyon dağılımıyla istatistiksel olarak uyumludur.
+            </p>
+          </div>
+
+          <div className="card val-card">
+            <div className="val-title">Yöntem</div>
+            <div style={{ marginTop: 18 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom: 14 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--gold-soft)', display: 'grid', placeItems: 'center', border: '1px solid var(--gold-strong)' }}>
+                  <Icon.Cpu />
+                </div>
+                <div>
+                  <div style={{ fontSize: 16, fontWeight: 700 }}>Stratified Sampling</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-2)' }}>Tabakalı Örnekleme</div>
+                </div>
+              </div>
+              <p style={{ color: 'var(--text-2)', fontSize: 14, margin: 0, lineHeight: 1.6 }}>
+                Her rating kategorisi (0.5 — 5.0) orijinal dağılımdaki oranında temsil edilecek şekilde örneklendi.
+                Bu sayede düşük frekanslı sınıflar (örn. 1.5★) küçültülmüş veri setinde kaybolmadı.
+              </p>
+              <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 3, height: 32 }}>
+                {RATING_DIST.map((r, i) => (
+                  <div key={i} title={`${r.label}★`} style={{
+                    background: r.gold ? 'linear-gradient(180deg, #F5C518, #E0A800)' : '#2A3344',
+                    borderRadius: 3,
+                    opacity: 0.4 + (r.pct / 30) * 0.6
+                  }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function Metric({ label, value, sub, star }) {
+  return (
+    <div className="card card-hover metric-card">
+      <div className="metric-label"><span className="dot" /> {label}</div>
+      <div className="metric-value mono">{value}{star && <span className="star"> ★</span>}</div>
+      <div className="metric-sub">{sub}</div>
+    </div>
+  );
+}
+
+// ========== RECS PAGE ==========
+const GENRES = ['Tümü','Action','Adventure','Animation','Children','Comedy','Crime','Documentary','Drama','Fantasy','Horror','Musical','Mystery','Romance','Sci-Fi','Thriller','War','Western'];
+const MIN_RATINGS = ['Tümü','3.0+','3.5+','4.0+','4.5+'];
+
+// Curated Matrix-search results (from spec)
+const MATRIX_RESULTS = [
+  { t: 'Lord of the Rings: Fellowship of the Ring, The', y: 2001, g: ['Adventure','Fantasy'], r: 4.1, sim: 67.6, reason: "Bu filmi izleyenler Matrix'i de sevdi" },
+  { t: 'Fight Club', y: 1999, g: ['Action','Crime','Drama'], r: 4.2, sim: 67.5, reason: 'Benzer kullanıcı profili — aksiyon/gerilim tercihi' },
+  { t: 'Lord of the Rings: The Return of the King, The', y: 2003, g: ['Action','Adventure','Fantasy'], r: 4.1, sim: 65.7, reason: 'Yüksek puanlı epik serinin devamı' },
+  { t: 'Lord of the Rings: The Two Towers, The', y: 2002, g: ['Adventure','Fantasy'], r: 4.0, sim: 65.0, reason: 'Benzer izleyici kitlesi' },
+  { t: 'Star Wars: Episode V — The Empire Strikes Back', y: 1980, g: ['Action','Adventure','Sci-Fi'], r: 4.2, sim: 64.1, reason: 'Sci-Fi türü ve yüksek puan ortaklığı' },
+  { t: 'Star Wars: Episode IV — A New Hope', y: 1977, g: ['Action','Adventure','Sci-Fi'], r: 4.1, sim: 62.6, reason: 'Klasik Sci-Fi — benzer kullanıcı grubu' },
+  { t: 'Gladiator', y: 2000, g: ['Action','Adventure','Drama'], r: 3.9, sim: 60.6, reason: 'Aksiyon/macera türü tercihi' },
+  { t: 'Raiders of the Lost Ark', y: 1981, g: ['Action','Adventure'], r: 4.0, sim: 60.6, reason: 'Yüksek puanlı aksiyon klasiği' },
+  { t: 'Shawshank Redemption, The', y: 1994, g: ['Crime','Drama'], r: 4.4, sim: 59.6, reason: 'En yüksek puanlı filmlerle örtüşüyor' },
+  { t: 'Sixth Sense, The', y: 1999, g: ['Drama','Horror','Mystery'], r: 3.9, sim: 58.5, reason: 'Gerilim/gizem türü ortaklığı' },
+];
+
+// realistic curated movie pool
+const POOL = [
+  { t: 'The Shawshank Redemption', y: 1994, g: ['Drama'], r: 4.6 },
+  { t: 'The Godfather', y: 1972, g: ['Drama','Crime'], r: 4.6 },
+  { t: 'Pulp Fiction', y: 1994, g: ['Drama','Crime'], r: 4.4 },
+  { t: 'The Dark Knight', y: 2008, g: ['Action','Drama'], r: 4.5 },
+  { t: 'Forrest Gump', y: 1994, g: ['Drama','Romance'], r: 4.4 },
+  { t: 'Inception', y: 2010, g: ['Action','Sci-Fi','Thriller'], r: 4.4 },
+  { t: 'The Matrix', y: 1999, g: ['Action','Sci-Fi'], r: 4.4 },
+  { t: 'Goodfellas', y: 1990, g: ['Drama','Crime'], r: 4.4 },
+  { t: 'Fight Club', y: 1999, g: ['Drama','Thriller'], r: 4.4 },
+  { t: 'The Lord of the Rings: The Return of the King', y: 2003, g: ['Action','Adventure','Fantasy'], r: 4.5 },
+  { t: 'Star Wars: Episode V — The Empire Strikes Back', y: 1980, g: ['Action','Adventure','Sci-Fi'], r: 4.4 },
+  { t: 'The Silence of the Lambs', y: 1991, g: ['Thriller','Horror','Crime'], r: 4.3 },
+  { t: 'Schindler\u2019s List', y: 1993, g: ['Drama'], r: 4.5 },
+  { t: 'Se7en', y: 1995, g: ['Thriller','Crime','Drama'], r: 4.3 },
+  { t: 'The Usual Suspects', y: 1995, g: ['Thriller','Crime','Mystery'], r: 4.3 },
+  { t: 'Interstellar', y: 2014, g: ['Drama','Sci-Fi','Adventure'], r: 4.3 },
+  { t: 'Gladiator', y: 2000, g: ['Action','Drama','Adventure'], r: 4.3 },
+  { t: 'Whiplash', y: 2014, g: ['Drama'], r: 4.3 },
+  { t: 'Toy Story 3', y: 2010, g: ['Animation','Comedy','Adventure'], r: 4.2 },
+  { t: 'WALL·E', y: 2008, g: ['Animation','Sci-Fi','Adventure'], r: 4.2 },
+  { t: 'Spirited Away', y: 2001, g: ['Animation','Adventure','Fantasy'], r: 4.4 },
+  { t: 'Eternal Sunshine of the Spotless Mind', y: 2004, g: ['Drama','Romance','Sci-Fi'], r: 4.2 },
+  { t: 'Memento', y: 2000, g: ['Thriller','Mystery'], r: 4.3 },
+  { t: 'The Prestige', y: 2006, g: ['Drama','Mystery','Thriller'], r: 4.3 },
+  { t: 'Léon: The Professional', y: 1994, g: ['Action','Crime','Drama'], r: 4.3 },
+  { t: 'Casablanca', y: 1942, g: ['Drama','Romance'], r: 4.2 },
+  { t: 'Reservoir Dogs', y: 1992, g: ['Crime','Thriller'], r: 4.2 },
+  { t: 'Apocalypse Now', y: 1979, g: ['Drama','Action'], r: 4.2 },
+  { t: 'Blade Runner 2049', y: 2017, g: ['Sci-Fi','Drama'], r: 4.1 },
+  { t: 'Mad Max: Fury Road', y: 2015, g: ['Action','Adventure','Sci-Fi'], r: 4.2 },
+  { t: 'No Country for Old Men', y: 2007, g: ['Crime','Drama','Thriller'], r: 4.2 },
+  { t: 'There Will Be Blood', y: 2007, g: ['Drama'], r: 4.2 },
+  { t: 'The Departed', y: 2006, g: ['Crime','Drama','Thriller'], r: 4.3 },
+  { t: 'Saving Private Ryan', y: 1998, g: ['Drama','Action'], r: 4.3 },
+  { t: 'Joker', y: 2019, g: ['Drama','Thriller','Crime'], r: 4.0 },
+  { t: 'Parasite', y: 2019, g: ['Drama','Thriller','Comedy'], r: 4.4 },
+  { t: 'Coco', y: 2017, g: ['Animation','Adventure','Drama'], r: 4.2 },
+  { t: 'Up', y: 2009, g: ['Animation','Adventure','Comedy'], r: 4.3 },
+  { t: 'Ratatouille', y: 2007, g: ['Animation','Comedy','Drama'], r: 4.2 },
+  { t: 'The Grand Budapest Hotel', y: 2014, g: ['Comedy','Drama'], r: 4.1 },
+  { t: 'Her', y: 2013, g: ['Drama','Romance','Sci-Fi'], r: 4.1 },
+  { t: 'La La Land', y: 2016, g: ['Drama','Romance','Comedy'], r: 4.1 },
+];
+
+const REASONS = [
+  'aynı yönetmenin filmleriyle benzer kullanıcı profili.',
+  'kullanıcı puanlama örüntüsü %{S} oranında benzer.',
+  'benzer tür ve dönem kombinasyonu.',
+  'cosine similarity vektörü en yakın komşulardan biri.',
+  'aynı kümede yer alan kullanıcılar yüksek puan vermiş.',
+  'tematik ve anlatım yapısı eşleşiyor.',
+  'KNN komşularının ortalama puanı yüksek.',
+  'tür profili ve rating dağılımı uyumlu.',
+];
+
+function badgeClass(g) {
+  const m = {
+    'Action':'b-action','Comedy':'b-comedy','Drama':'b-drama','Horror':'b-horror',
+    'Sci-Fi':'b-scifi','Animation':'b-animation','Thriller':'b-thriller',
+    'Romance':'b-romance','Adventure':'b-adventure','Crime':'b-crime',
+    'Fantasy':'b-fantasy','Mystery':'b-mystery'
+  };
+  return m[g] || 'b-drama';
+}
+
+// seeded random for reproducible recommendations per (query, filters)
+function seededRand(seed) {
+  let s = 0;
+  for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function generateRecs({ query, genre, minRating, yearStart, yearEnd, count }) {
+  // If user searched for Matrix specifically, return the curated spec results
+  const q = (query || '').toLowerCase().trim();
+  const isMatrix = q.includes('matrix');
+
+  let pool;
+  if (isMatrix) {
+    pool = MATRIX_RESULTS.slice();
+  } else {
+    pool = POOL.slice().filter(m => !q || !m.t.toLowerCase().includes(q));
+  }
+
+  // Apply filters
+  if (genre !== 'Tümü') pool = pool.filter(m => m.g.includes(genre));
+  if (minRating !== 'Tümü') {
+    const cutoff = parseFloat(minRating);
+    pool = pool.filter(m => m.r >= cutoff);
+  }
+  const ys = parseInt(yearStart); const ye = parseInt(yearEnd);
+  if (!isNaN(ys)) pool = pool.filter(m => m.y >= ys);
+  if (!isNaN(ye)) pool = pool.filter(m => m.y <= ye);
+
+  if (isMatrix) {
+    return pool.slice(0, count);
+  }
+
+  const rand = seededRand(`${query}|${genre}|${minRating}|${yearStart}|${yearEnd}|${count}`);
+  pool.sort((a, b) => rand() - 0.5);
+  const picks = pool.slice(0, count);
+  return picks.map((m, i) => {
+    const sim = Math.max(58, Math.round(96 - i * (35 / Math.max(1, count - 1)) - rand() * 3));
+    const reason = REASONS[Math.floor(rand() * REASONS.length)].replace('%{S}', sim);
+    return { ...m, sim, reason };
+  });
+}
+
+function RecsPage() {
+  const [query, setQuery] = useState('Matrix');
+  const [userId, setUserId] = useState('');
+  const [genre, setGenre] = useState('Tümü');
+  const [minRating, setMinRating] = useState('Tümü');
+  const [yearStart, setYearStart] = useState('');
+  const [yearEnd, setYearEnd] = useState('');
+  const [count, setCount] = useState(10);
+  const [results, setResults] = useState(() => generateRecs({ query: 'Matrix', genre: 'Tümü', minRating: 'Tümü', yearStart:'', yearEnd:'', count: 10 }));
+  const [loading, setLoading] = useState(false);
+  const [lastQuery, setLastQuery] = useState('Matrix');
+
+  function onSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setLastQuery(query || 'beğendiklerin');
+    setTimeout(() => {
+      setResults(generateRecs({ query, genre, minRating, yearStart, yearEnd, count }));
+      setLoading(false);
+    }, 650);
+  }
+
+  return (
+    <div className="page-enter">
+      <section className="container page-header">
+        <span className="eyebrow"><span className="dot" /> Recommendation Engine</span>
+        <h1 className="section-title" style={{ fontSize: 44, marginTop: 16 }}>Film Önerisi Al</h1>
+        <p className="section-sub" style={{ fontSize: 16 }}>
+          KNN algoritması ile kişiselleştirilmiş film önerileri.
+        </p>
+
+        <form className="card recform-card" onSubmit={onSubmit}>
+          <h3 className="form-section-title">Tercihlerinizi Belirleyin</h3>
+
+          <div className="form-row">
+            <div>
+              <label className="field-label">Beğendiğiniz Bir Film</label>
+              <input className="field-input" placeholder="örn: Toy Story, Matrix, Inception..." value={query} onChange={e => setQuery(e.target.value)} />
+            </div>
+            <div>
+              <label className="field-label">Kullanıcı ID (opsiyonel)</label>
+              <input className="field-input" placeholder="örn: 12345" value={userId} onChange={e => setUserId(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div>
+              <label className="field-label">Film Türü</label>
+              <select className="field-select" value={genre} onChange={e => setGenre(e.target.value)}>
+                {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Minimum Ortalama Puan</label>
+              <select className="field-select" value={minRating} onChange={e => setMinRating(e.target.value)}>
+                {MIN_RATINGS.map(g => <option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div>
+              <label className="field-label">Yıl Aralığı — Başlangıç</label>
+              <input className="field-input" type="number" placeholder="örn: 1990" value={yearStart} onChange={e => setYearStart(e.target.value)} />
+            </div>
+            <div>
+              <label className="field-label">Yıl Aralığı — Bitiş</label>
+              <input className="field-input" type="number" placeholder="örn: 2023" value={yearEnd} onChange={e => setYearEnd(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="form-row-single">
+            <label className="field-label">Öneri Sayısı</label>
+            <select className="field-select" value={count} onChange={e => setCount(parseInt(e.target.value))}>
+              {[5,10,15,20].map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+
+          <div className="form-submit-row">
+            <button className="submit-btn" type="submit" disabled={loading}>
+              {loading ? <><Spinner /> Hesaplanıyor...</> : <><Icon.Film /> Film Öner</>}
+            </button>
+          </div>
+
+          <div className="algo-banner" style={{ marginTop: 28, marginBottom: 0 }}>
+            <div className="algo-icon"><Icon.Cpu /></div>
+            <div className="algo-text">
+              Bu sistem <span className="mono">KNN (K-Nearest Neighbors)</span> algoritması ve <span className="mono">cosine similarity</span> kullanılarak çalışmaktadır.
+            </div>
+          </div>
+        </form>
+
+        <div className="results-header">
+          <div>
+            <h2 className="section-title" style={{ fontSize: 22, marginBottom: 4 }}>Önerilen Filmler</h2>
+            <p className="section-sub" style={{ marginBottom: 0 }}>
+              <span className="mono" style={{color:'var(--gold)'}}>“{lastQuery}”</span> için en yakın komşular
+            </p>
+          </div>
+          <div className="results-count">{results.length} sonuç · {genre} · {minRating}</div>
+        </div>
+
+        {loading ? (
+          <div className="film-grid">
+            {Array.from({ length: count }).map((_, i) => <div key={i} className="skeleton" />)}
+          </div>
+        ) : results.length === 0 ? (
+          <div className="empty-state">
+            <div className="icon">🎬</div>
+            Filtrelerle eşleşen film bulunamadı. Tür veya minimum puan kısıtlamalarını gevşetmeyi deneyin.
+          </div>
+        ) : (
+          <div className="film-grid">
+            {results.map((m, i) => <FilmCard key={`${m.t}-${i}`} film={m} rank={i + 1} />)}
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function FilmCard({ film, rank }) {
+  const [w, setW] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setW(film.sim), 50 + rank * 30);
+    return () => clearTimeout(t);
+  }, [film.sim, rank]);
+
+  return (
+    <div className="card card-hover film-card">
+      <div className="film-rank mono">#{String(rank).padStart(2, '0')}</div>
+      <div className="film-title-row">
+        <h3 className="film-title">{film.t} <span className="film-year">({film.y})</span></h3>
+      </div>
+      <div className="badges">
+        {film.g.map(g => <span key={g} className={`badge ${badgeClass(g)}`}>{g}</span>)}
+      </div>
+      <div className="similarity-row">
+        <span className="sim-label">Similarity</span>
+        <div className="sim-bar"><div className="sim-fill" style={{ width: `${w}%` }} /></div>
+        <span className="sim-pct">{film.sim}%</span>
+      </div>
+      <div className="rating-row">
+        <StarRow rating={film.r} />
+        <span className="rating-num">★ {film.r.toFixed(1)}</span>
+      </div>
+      <div className="reason">
+        <b>Benzer çünkü:</b> {film.reason}
+      </div>
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" style={{ animation: 'spin 0.8s linear infinite' }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <circle cx="12" cy="12" r="9" stroke="#0A0E1A" strokeWidth="3" strokeLinecap="round" fill="none" strokeDasharray="14 50" />
+    </svg>
+  );
+}
+
+// ========== APP ==========
+function App() {
+  const [page, setPage] = useState('home');
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
+
+  return (
+    <div className="app-shell">
+      <Nav page={page} setPage={setPage} />
+      <main style={{ flex: 1 }} data-screen-label={
+        page === 'home' ? '01 Ana Sayfa' : page === 'data' ? '02 Veri Seti Analizi' : '03 Film Önerisi'
+      }>
+        {page === 'home' && <HomePage setPage={setPage} />}
+        {page === 'data' && <DataPage />}
+        {page === 'recs' && <RecsPage />}
+      </main>
+      <footer className="footer container">
+        Veri Madenciliği Dersi — 2024 &nbsp;|&nbsp; MovieLens ml-32m Dataset
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

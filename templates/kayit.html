@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Kayıt Ol — CineMatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+<div class="app-shell">
+  {% include '_nav.html' %}
+
+  <main style="flex:1;display:flex;align-items:center;justify-content:center;padding:64px 16px">
+    <div class="auth-wrap">
+      <div style="text-align:center;margin-bottom:32px">
+        <span class="eyebrow"><span class="dot"></span> Yeni Hesap</span>
+        <h1 class="section-title" style="font-size:32px;margin-top:16px;margin-bottom:8px">Kayıt Ol</h1>
+        <p class="section-sub" style="margin:0">Ücretsiz hesap oluştur, öneri geçmişini kaydet.</p>
+      </div>
+
+      {% if hata %}
+      <div class="auth-alert auth-alert-error">{{ hata }}</div>
+      {% endif %}
+      {% if mesaj %}
+      <div class="auth-alert auth-alert-success">{{ mesaj }}</div>
+      {% endif %}
+
+      {% if not mesaj %}
+      <form class="card auth-card" method="POST" action="/kayit" id="kayit-form">
+        <div style="margin-bottom:16px">
+          <label class="field-label" for="email">E-posta</label>
+          <input class="field-input" id="email" name="email" type="email"
+                 placeholder="ornek@mail.com" required autocomplete="email"/>
+        </div>
+        <div style="margin-bottom:16px">
+          <label class="field-label" for="sifre">Şifre</label>
+          <input class="field-input" id="sifre" name="sifre" type="password"
+                 placeholder="En az 6 karakter" required minlength="6" autocomplete="new-password"/>
+        </div>
+        <div style="margin-bottom:24px">
+          <label class="field-label" for="sifre2">Şifre Tekrar</label>
+          <input class="field-input" id="sifre2" name="sifre2" type="password"
+                 placeholder="••••••••" required autocomplete="new-password"/>
+          <p id="sifre-hata" style="color:#F87171;font-size:12px;margin-top:6px;display:none">Şifreler eşleşmiyor.</p>
+        </div>
+        <button class="submit-btn" type="submit" style="width:100%;justify-content:center">
+          Kayıt Ol
+        </button>
+      </form>
+      {% endif %}
+
+      <p style="text-align:center;color:var(--text-2);font-size:14px;margin-top:20px">
+        Zaten hesabın var mı?
+        <a href="/giris" class="auth-link" style="font-weight:600">Giriş Yap</a>
+      </p>
+    </div>
+  </main>
+
+  {% include '_footer.html' %}
+</div>
+
+<script>
+  document.getElementById('kayit-form')?.addEventListener('submit', function(e) {
+    const s1 = document.getElementById('sifre').value;
+    const s2 = document.getElementById('sifre2').value;
+    const err = document.getElementById('sifre-hata');
+    if (s1 !== s2) {
+      e.preventDefault();
+      err.style.display = 'block';
+    } else {
+      err.style.display = 'none';
+    }
+  });
+</script>
+</body>
+</html>

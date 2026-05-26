@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — CineMatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  {% include '_nav.html' %}
+
+  <main style="flex:1">
+    <section class="container page-header">
+      <span class="eyebrow"><span class="dot"></span> Kişisel Alan</span>
+      <h1 class="section-title" style="font-size:44px;margin-top:16px">Dashboard</h1>
+    </section>
+
+    <section class="container" style="padding-bottom:80px">
+
+      <!-- Kullanıcı kartı -->
+      <div class="card dashboard-user-card">
+        <div class="dashboard-avatar">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div>
+          <div class="dashboard-email">{{ kullanici }}</div>
+          <div class="dashboard-meta">
+            <span>{{ kaydedilenler|length }} film kaydedildi</span>
+            <span>{{ gecmis|length }} öneri alındı</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sekme navigasyonu -->
+      <div class="dashboard-tabs">
+        <button class="sekme-btn aktif" onclick="sekmeGoster('kaydedilenler', this)">
+          Kaydedilen Filmler ({{ kaydedilenler|length }})
+        </button>
+        <button class="sekme-btn" onclick="sekmeGoster('gecmis', this)">
+          Öneri Geçmişi (<span id="gecmis-count">{{ gecmis|length }}</span>)
+        </button>
+        <button class="sekme-btn" onclick="sekmeGoster('istatistikler', this)">
+          Istatistikler
+        </button>
+      </div>
+
+      <!-- ── Sekme 1: Kaydedilen Filmler ── -->
+      <div class="sekme-icerik" id="kaydedilenler">
+        {% if not kaydedilenler %}
+        <div class="empty-state">
+          <div class="db-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
+          </div>
+          Henüz kaydettiğin film yok.<br>
+          <a href="/oneri" class="auth-link" style="margin-top:12px;display:inline-block">
+            Öneri alarak beğendiğin filmleri kaydet →
+          </a>
+        </div>
+        {% else %}
+        <div class="dashboard-film-grid">
+          {% for film in kaydedilenler %}
+          {% set genres_list = film.genres.split('|') if film.genres else [] %}
+          {% set cls_map = {
+            'Action': 'b-action', 'Comedy': 'b-comedy', 'Drama': 'b-drama',
+            'Horror': 'b-horror', 'Sci-Fi': 'b-scifi', 'Animation': 'b-animation',
+            'Thriller': 'b-thriller', 'Romance': 'b-romance', 'Adventure': 'b-adventure',
+            'Crime': 'b-crime', 'Fantasy': 'b-fantasy', 'Mystery': 'b-mystery'
+          } %}
+          <div class="card card-hover dashboard-film-card" id="film-{{ film.movie_id }}">
+            <button class="dashboard-remove-btn" onclick="filmiKaldir(this, {{ film.movie_id }})" title="Kaldır">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+            </button>
+            <img class="dashboard-film-poster"
+                 src="{{ film.poster_url or '/static/poster_yok.svg' }}"
+                 alt="{{ film.title }}" loading="lazy"
+                 onerror="this.src='/static/poster_yok.svg'"/>
+            <div class="dashboard-film-info">
+              <h3 class="dashboard-film-title">
+                {% if film.tmdb_url %}
+                <a href="{{ film.tmdb_url }}" target="_blank" rel="noopener">{{ film.title }}</a>
+                {% else %}{{ film.title }}{% endif %}
+              </h3>
+              {% if film.year %}<span class="dashboard-film-year">{{ film.year }}</span>{% endif %}
+              <div class="badges" style="flex-wrap:wrap;gap:4px">
+                {% for g in genres_list[:3] %}
+                <span class="badge {{ cls_map.get(g, 'b-drama') }}" style="font-size:10px;padding:3px 7px">{{ g }}</span>
+                {% endfor %}
+              </div>
+              {% if film.avg_rating %}
+              <span class="dashboard-film-rating">&#9733; {{ '%.1f'|format(film.avg_rating) }}</span>
+              {% endif %}
+              <div class="dashboard-film-actions">
+                {% if film.tmdb_url %}
+                <a href="{{ film.tmdb_url }}" target="_blank" rel="noopener" class="film-link-btn" style="font-size:11px;padding:5px 10px">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
+                  TMDB'de Gör
+                </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- ── Sekme 2: Öneri Geçmişi ── -->
+      <div class="sekme-icerik" id="gecmis" style="display:none">
+
+        <!-- Kontrol çubuğu -->
+        <div class="gecmis-controls" id="gecmis-controls" style="display:none">
+          <div class="gecmis-controls-left">
+            <div class="ctrl-group">
+              <span class="ctrl-label">Sirala</span>
+              <div class="ctrl-btns">
+                <button class="ctrl-btn active" onclick="setSort('date-desc',this)">En Yeni</button>
+                <button class="ctrl-btn" onclick="setSort('date-asc',this)">En Eski</button>
+                <button class="ctrl-btn" onclick="setSort('algo',this)">Algoritma</button>
+                <button class="ctrl-btn" onclick="setSort('alpha',this)">A — Z</button>
+              </div>
+            </div>
+            <div class="ctrl-group">
+              <span class="ctrl-label">Algoritma</span>
+              <div class="ctrl-btns">
+                <button class="ctrl-btn active" onclick="setFilter('all',this)">Tumu</button>
+                <button class="ctrl-btn ctrl-knn" onclick="setFilter('knn',this)">KNN</button>
+                <button class="ctrl-btn ctrl-dt"  onclick="setFilter('dt',this)">DT</button>
+                <button class="ctrl-btn ctrl-nb"  onclick="setFilter('nb',this)">NB</button>
+              </div>
+            </div>
+          </div>
+          <button class="gecmis-temizle-btn" id="temizle-btn" onclick="gecmisiTemizle()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+            </svg>
+            Gecmisi Temizle
+          </button>
+        </div>
+
+        <!-- Empty state -->
+        <div id="gecmis-empty" class="empty-state" style="display:none">
+          <div class="db-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+          </div>
+          Henuz oneri almadiniz.<br>
+          <a href="/oneri" class="auth-link" style="margin-top:12px;display:inline-block">Film onerisi almak icin tiklayin →</a>
+        </div>
+
+        <!-- Tablo -->
+        <div id="gecmis-table-wrap" class="table-wrap" style="display:none">
+          <table class="films">
+            <thead>
+              <tr>
+                <th style="width:48px">#</th>
+                <th>Film</th>
+                <th style="width:140px">Algoritma</th>
+                <th style="width:160px;text-align:right">Tarih</th>
+              </tr>
+            </thead>
+            <tbody id="gecmis-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── Sekme 3: İstatistikler ── -->
+      <div class="sekme-icerik" id="istatistikler" style="display:none">
+
+        <!-- Özet metrikler -->
+        <div class="metric-grid" style="margin-bottom:32px">
+          <div class="card card-hover metric-card">
+            <div class="metric-label"><span class="dot"></span> Toplam Oneri</div>
+            <div class="metric-value mono" id="stat-total">—</div>
+            <div class="metric-sub">tum zamanlar</div>
+          </div>
+          <div class="card card-hover metric-card">
+            <div class="metric-label"><span class="dot"></span> En Cok Kullanilan</div>
+            <div class="metric-value mono" id="stat-top-algo" style="font-size:28px">—</div>
+            <div class="metric-sub">algoritma</div>
+          </div>
+          <div class="card card-hover metric-card">
+            <div class="metric-label"><span class="dot"></span> Kaydedilen Film</div>
+            <div class="metric-value mono" id="stat-saved">—</div>
+            <div class="metric-sub">listende</div>
+          </div>
+          <div class="card card-hover metric-card">
+            <div class="metric-label"><span class="dot"></span> Favori Tur</div>
+            <div class="metric-value mono" id="stat-top-genre" style="font-size:22px">—</div>
+            <div class="metric-sub">kaydedilenlerden</div>
+          </div>
+        </div>
+
+        <!-- Grafik satırı 1: donut + bar -->
+        <div class="stats-chart-grid" style="margin-bottom:24px">
+          <div class="card chart-card">
+            <div class="chart-card-header">
+              <span class="chart-title">Algoritma Dagilimi</span>
+              <span class="chart-sub">toplam oneriden</span>
+            </div>
+            <div class="chart-body" style="height:260px;display:flex;align-items:center;justify-content:center">
+              <canvas id="algoChart"></canvas>
+            </div>
+          </div>
+          <div class="card chart-card">
+            <div class="chart-card-header">
+              <span class="chart-title">Kaydedilen Filmlerin Turleri</span>
+              <span class="chart-sub">ilk 8 tur</span>
+            </div>
+            <div class="chart-body" style="height:260px">
+              <canvas id="genreChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grafik satırı 2: zaman çizelgesi -->
+        <div class="card chart-card">
+          <div class="chart-card-header">
+            <span class="chart-title">Son 14 Gun Oneri Aktivitesi</span>
+            <span class="chart-sub">gunluk oneri sayisi</span>
+          </div>
+          <div class="chart-body" style="height:220px">
+            <canvas id="timelineChart"></canvas>
+          </div>
+        </div>
+
+        <div id="stats-empty-note" style="display:none;margin-top:24px" class="empty-state">
+          <div class="db-empty-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>
+          </div>
+          Istatistik gormek icin oneri alin ve film kaydedin.
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  {% include '_footer.html' %}
+</div>
+
+<script>
+const GECMIS_DATA = {{ gecmis | tojson }};
+const KAYIT_DATA  = {{ kaydedilenler | tojson }};
+let currentSort   = 'date-desc';
+let currentFilter = 'all';
+let chartsReady   = false;
+
+// ── Sekme geçişi ──────────────────────────────────────────────────────────────
+function sekmeGoster(sekme, btn) {
+  document.querySelectorAll('.sekme-icerik').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.sekme-btn').forEach(el => el.classList.remove('aktif'));
+  document.getElementById(sekme).style.display = 'block';
+  if (btn) btn.classList.add('aktif');
+  window.location.hash = sekme;
+  if (sekme === 'istatistikler' && !chartsReady) { initCharts(); chartsReady = true; }
+}
+
+// ── Sıralama / filtre ─────────────────────────────────────────────────────────
+function setSort(sort, btn) {
+  currentSort = sort;
+  document.querySelectorAll('.ctrl-btn[onclick^="setSort"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGecmis();
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.ctrl-btn[onclick^="setFilter"]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGecmis();
+}
+
+function renderGecmis() {
+  let data = [...GECMIS_DATA];
+  if (currentFilter !== 'all') data = data.filter(r => r.algoritma === currentFilter);
+
+  if      (currentSort === 'date-desc') data.sort((a,b) => (b.olusturma||'').localeCompare(a.olusturma||''));
+  else if (currentSort === 'date-asc')  data.sort((a,b) => (a.olusturma||'').localeCompare(b.olusturma||''));
+  else if (currentSort === 'algo')      data.sort((a,b) => (a.algoritma||'').localeCompare(b.algoritma||''));
+  else if (currentSort === 'alpha')     data.sort((a,b) => (a.film_adi||'').localeCompare(b.film_adi||''));
+
+  const algoMap = { knn: ['KNN','b-action'], dt: ['Decision Tree','b-comedy'], nb: ['Naive Bayes','b-animation'] };
+  const tbody   = document.getElementById('gecmis-tbody');
+  if (!tbody) return;
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-2);padding:32px;font-size:14px">Bu filtreyle eslesen sonuc yok.</td></tr>';
+    document.getElementById('gecmis-count').textContent = '0';
+    return;
+  }
+
+  tbody.innerHTML = data.map((item, i) => {
+    const [label, cls] = algoMap[item.algoritma] || [item.algoritma || '—', 'b-drama'];
+    const tarih = item.olusturma ? item.olusturma.slice(0,10) : '—';
+    return `<tr>
+      <td class="rank-cell">#${i+1}</td>
+      <td class="film-name">${esc(item.film_adi || '')}</td>
+      <td><span class="badge ${cls}">${label}</span></td>
+      <td class="count-cell" style="color:var(--text-2);font-family:'JetBrains Mono',monospace;font-size:12px;text-align:right">${tarih}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('gecmis-count').textContent = data.length;
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── Geçmiş temizle ────────────────────────────────────────────────────────────
+async function gecmisiTemizle() {
+  if (!confirm('Tum oneri gecmisini silmek istediginizden emin misiniz?')) return;
+  const btn = document.getElementById('temizle-btn');
+  btn.disabled = true;
+  btn.textContent = 'Temizleniyor...';
+  try {
+    const res  = await fetch('/gecmis-temizle', { method: 'POST' });
+    const json = await res.json();
+    if (json.status === 'ok') {
+      GECMIS_DATA.splice(0);
+      document.getElementById('gecmis-controls').style.display   = 'none';
+      document.getElementById('gecmis-table-wrap').style.display = 'none';
+      document.getElementById('gecmis-empty').style.display      = '';
+      document.getElementById('gecmis-count').textContent        = '0';
+    } else {
+      btn.disabled = false;
+      btn.textContent = 'Gecmisi Temizle';
+    }
+  } catch {
+    btn.disabled = false;
+    btn.textContent = 'Gecmisi Temizle';
+  }
+}
+
+// ── Grafikler ─────────────────────────────────────────────────────────────────
+function initCharts() {
+  Chart.defaults.color       = '#9BA3AF';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+  Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+  Chart.defaults.font.size   = 12;
+
+  const algoCount = { knn: 0, dt: 0, nb: 0 };
+  GECMIS_DATA.forEach(r => { if (r.algoritma in algoCount) algoCount[r.algoritma]++; });
+  const algoNames = { knn: 'KNN', dt: 'DT', nb: 'NB' };
+  const topAlgo   = Object.entries(algoCount).sort((a,b) => b[1]-a[1])[0];
+  document.getElementById('stat-total').textContent    = GECMIS_DATA.length;
+  document.getElementById('stat-top-algo').textContent = (topAlgo && topAlgo[1] > 0) ? algoNames[topAlgo[0]] : '—';
+  document.getElementById('stat-saved').textContent    = KAYIT_DATA.length;
+
+  const genreCount = {};
+  KAYIT_DATA.forEach(f => {
+    if (f.genres) f.genres.split('|').forEach(g => { if (g) genreCount[g] = (genreCount[g]||0)+1; });
+  });
+  const sortedGenres = Object.entries(genreCount).sort((a,b) => b[1]-a[1]);
+  document.getElementById('stat-top-genre').textContent = sortedGenres.length ? sortedGenres[0][0] : '—';
+
+  if (GECMIS_DATA.length === 0 && KAYIT_DATA.length === 0) {
+    document.getElementById('stats-empty-note').style.display = '';
+  }
+
+  // Donut: Algoritma dağılımı
+  new Chart(document.getElementById('algoChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['KNN', 'Decision Tree', 'Naive Bayes'],
+      datasets: [{
+        data: [algoCount.knn, algoCount.dt, algoCount.nb],
+        backgroundColor: ['rgba(59,130,246,0.75)', 'rgba(16,185,129,0.75)', 'rgba(139,92,246,0.75)'],
+        borderColor:     ['#3B82F6', '#10B981', '#8B5CF6'],
+        borderWidth: 2, hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true, pointStyleWidth: 10 } }
+      }
+    }
+  });
+
+  // Yatay bar: Tür dağılımı
+  const top8 = sortedGenres.slice(0, 8);
+  new Chart(document.getElementById('genreChart'), {
+    type: 'bar',
+    data: {
+      labels: top8.map(x => x[0]),
+      datasets: [{
+        data: top8.map(x => x[1]),
+        backgroundColor: 'rgba(245,197,24,0.65)',
+        borderColor: '#F5C518',
+        borderWidth: 1, borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // Bar: Son 14 gün zaman çizelgesi
+  const days = {};
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    days[d.toISOString().slice(0,10)] = 0;
+  }
+  GECMIS_DATA.forEach(r => {
+    if (r.olusturma) {
+      const day = r.olusturma.slice(0,10);
+      if (day in days) days[day]++;
+    }
+  });
+
+  new Chart(document.getElementById('timelineChart'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(days).map(d => d.slice(5)),
+      datasets: [{
+        label: 'Oneri',
+        data: Object.values(days),
+        backgroundColor: 'rgba(59,130,246,0.6)',
+        borderColor: '#3B82F6',
+        borderWidth: 1, borderRadius: 5,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+// ── Film kaldır ───────────────────────────────────────────────────────────────
+async function filmiKaldir(btn, movieId) {
+  const card = document.getElementById('film-' + movieId);
+  const res  = await fetch('/kaydet-kaldir', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ movie_id: movieId })
+  });
+  const json = await res.json();
+  if (json.status === 'kaldirildi') {
+    card.style.opacity   = '0';
+    card.style.transform = 'scale(0.95)';
+    setTimeout(() => card.remove(), 250);
+  }
+}
+
+// ── Başlangıç ─────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const hasGecmis = GECMIS_DATA.length > 0;
+  document.getElementById('gecmis-controls').style.display   = hasGecmis ? 'flex' : 'none';
+  document.getElementById('gecmis-table-wrap').style.display = hasGecmis ? ''     : 'none';
+  document.getElementById('gecmis-empty').style.display      = hasGecmis ? 'none' : '';
+  if (hasGecmis) renderGecmis();
+
+  const hash = window.location.hash.slice(1);
+  const btns = document.querySelectorAll('.sekme-btn');
+  if      (hash === 'gecmis')        sekmeGoster('gecmis', btns[1]);
+  else if (hash === 'istatistikler') sekmeGoster('istatistikler', btns[2]);
+  else { document.getElementById('kaydedilenler').style.display = ''; btns[0].classList.add('aktif'); }
+});
+</script>
+</body>
+</html>

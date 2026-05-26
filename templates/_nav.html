@@ -1,0 +1,125 @@
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="logo" style="text-decoration:none;color:inherit">
+      <div class="logo-mark">C</div>
+      <span>CineMatch</span>
+    </a>
+
+    <div class="nav-search" id="nav-search-wrap">
+      <div class="nav-search-box">
+        <svg class="nav-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+          id="nav-search-input"
+          class="nav-search-input"
+          type="text"
+          placeholder="Film ara..."
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+      <div class="nav-search-dropdown" id="nav-search-dropdown"></div>
+    </div>
+
+    <div class="nav-links">
+      <a href="/"       class="nav-link {{ 'active' if request.path == '/' else '' }}">Ana Sayfa</a>
+      <a href="/analiz" class="nav-link {{ 'active' if request.path == '/analiz' else '' }}">Veri Analizi</a>
+      <a href="/oneri"  class="nav-link {{ 'active' if request.path == '/oneri' else '' }}">Film Önerisi</a>
+
+      {% if session.get('user_id') %}
+        <div class="nav-profile-wrap" id="nav-profile-wrap">
+          <button class="nav-profile-btn" id="nav-profile-btn">
+            <div class="nav-avatar">
+              {{ session.get('user_email', 'A')[0]|upper }}
+            </div>
+          </button>
+          <div class="nav-profile-dropdown" id="nav-profile-dropdown">
+            <div class="np-header">
+              <div class="np-email">{{ session.get('user_email', '') }}</div>
+              <div class="np-sub">Üye</div>
+            </div>
+            <div class="np-links">
+              <a href="/profil" class="np-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Profil Ayarları
+              </a>
+              <a href="/dashboard" class="np-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                Dashboard
+              </a>
+              <div class="np-divider"></div>
+              <a href="/cikis" class="np-link np-logout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Çıkış Yap
+              </a>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <a href="/giris" class="nav-link {{ 'active' if request.path == '/giris' else '' }}">Giriş Yap</a>
+        <a href="/kayit" class="nav-cta">Kayıt Ol</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<script>
+(function() {
+  const input    = document.getElementById('nav-search-input');
+  const dropdown = document.getElementById('nav-search-dropdown');
+  const wrap     = document.getElementById('nav-search-wrap');
+  if (!input) return;
+
+  let timer;
+
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 2) { dropdown.style.display = 'none'; return; }
+    timer = setTimeout(() => fetchResults(q), 180);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const q = input.value.trim();
+      if (q) window.location.href = '/oneri?film_adi=' + encodeURIComponent(q) + '&auto=1';
+    }
+    if (e.key === 'Escape') { dropdown.style.display = 'none'; }
+  });
+
+  document.addEventListener('click', e => {
+    if (!wrap.contains(e.target)) dropdown.style.display = 'none';
+  });
+
+  const profileWrap = document.getElementById('nav-profile-wrap');
+  const profileBtn = document.getElementById('nav-profile-btn');
+  if (profileBtn) {
+    profileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      profileWrap.classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if (!profileWrap.contains(e.target)) profileWrap.classList.remove('open');
+    });
+  }
+
+  async function fetchResults(q) {
+    try {
+      const res  = await fetch('/ara?q=' + encodeURIComponent(q));
+      const data = await res.json();
+      if (!data.length) { dropdown.style.display = 'none'; return; }
+      dropdown.innerHTML = data.map(r =>
+        '<a class="nav-search-result" href="/oneri?film_adi=' +
+        encodeURIComponent(r.title) + '&auto=1">' +
+        '<span class="nsr-title">' + escHtml(r.title) + '</span>' +
+        '<span class="nsr-genres">' + escHtml(r.genres) + '</span>' +
+        '</a>'
+      ).join('');
+      dropdown.style.display = 'block';
+    } catch(e) {}
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+})();
+</script>

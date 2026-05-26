@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CineMatch — Film Öneri Sistemi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body>
+<div class="app-shell">
+  {% include '_nav.html' %}
+
+  <main style="flex:1">
+    <section class="hero">
+      <div class="hero-bg"></div>
+      <div class="hero-grid"></div>
+      <div class="container hero-inner">
+        <span class="eyebrow"><span class="dot"></span> KNN · Cosine Similarity · MovieLens ml-32m</span>
+        <h1>Doğru filmi bulmanın <span class="accent">akıllı yolu</span></h1>
+        <p class="hero-sub">Yapay Zeka Destekli Film Öneri Sistemi</p>
+        <p class="hero-desc">
+          MovieLens ml-32m veri seti üzerinde KNN algoritması kullanılarak geliştirilmiş
+          kişiselleştirilmiş film öneri sistemi. 32 milyon rating'lik veri,
+          stratified sampling ile %15'lik temsili örnekleme indirilmiş ve
+          Kolmogorov-Smirnov testi (p=1.0000) ile istatistiksel olarak doğrulanmıştır.
+        </p>
+        <div class="hero-cta">
+          <a href="/oneri" class="btn btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.7 4.3L18 9l-4.3 1.7L12 15l-1.7-4.3L6 9l4.3-1.7z"/><path d="M19 17l.7 1.7L21 19l-1.3.6L19 21l-.7-1.4L17 19l1.3-.6z"/></svg>
+            Film Önerisi Al
+          </a>
+          <a href="/analiz" class="btn btn-outline">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+            Veri Analizi
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="container">
+      <div class="info-grid">
+        <div class="card card-hover info-card">
+          <div class="info-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v6c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 11v6c0 1.66 4 3 9 3s9-1.34 9-3v-6"/></svg>
+          </div>
+          <div>
+            <div class="info-label">Veri Seti</div>
+            <div class="info-value">32M <span style="font-size:18px;color:var(--text-2);font-weight:600">Rating</span></div>
+            <div class="info-sub">MovieLens ml-32m</div>
+          </div>
+        </div>
+        <div class="card card-hover info-card">
+          <div class="info-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div>
+            <div class="info-label">Kullanıcı</div>
+            <div class="info-value">200,948</div>
+            <div class="info-sub">Aktif kullanıcı</div>
+          </div>
+        </div>
+        <div class="card card-hover info-card">
+          <div class="info-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+          </div>
+          <div>
+            <div class="info-label">Film</div>
+            <div class="info-value">87,585</div>
+            <div class="info-sub">Benzersiz film</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Örnekleme Süreci ── -->
+    <section class="container stat-section">
+      <span class="eyebrow"><span class="dot"></span> Data Pipeline</span>
+      <h2 class="section-title" style="font-size:28px;margin-top:12px">Örnekleme Süreci</h2>
+      <p class="section-sub">32M satırlık ham veri, stratified sampling ve cold-start filtresiyle 4.7M satıra indirildi.</p>
+
+      <div class="pipeline-row">
+        <div class="pipeline-step">
+          <div class="p-tag">Ham Veri</div>
+          <div class="p-val mono">32,000,204</div>
+          <div class="p-sub">ml-32m tam veri seti</div>
+        </div>
+        <div class="pipeline-arrow">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <span class="p-arrow-label">Stratified<br>%15</span>
+        </div>
+        <div class="pipeline-step">
+          <div class="p-tag">Örneklem</div>
+          <div class="p-val mono">4,800,026</div>
+          <div class="p-sub">%15 örnekleme oranı</div>
+        </div>
+        <div class="pipeline-arrow">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          <span class="p-arrow-label">Cold-start<br>Filtresi</span>
+        </div>
+        <div class="pipeline-step pipeline-step-final">
+          <div class="p-tag">Temiz Örneklem</div>
+          <div class="p-val mono">4,707,545</div>
+          <div class="p-sub">30,575 kullanıcı · 14,787 film</div>
+        </div>
+      </div>
+
+      <div class="pipeline-detail-grid">
+        <div class="pipeline-detail-card card">
+          <div class="pd-label">Cold-start kullanıcı filtresi</div>
+          <div class="pd-rule">Minimum 20 rating</div>
+          <div class="pd-removed">−9,349 satır kaldırıldı</div>
+        </div>
+        <div class="pipeline-detail-card card">
+          <div class="pd-label">Cold-start film filtresi</div>
+          <div class="pd-rule">Minimum 10 rating</div>
+          <div class="pd-removed">−83,132 satır kaldırıldı</div>
+        </div>
+        <div class="pipeline-detail-card card">
+          <div class="pd-label">Duplikasyon temizliği</div>
+          <div class="pd-rule">userId + movieId çiftleri</div>
+          <div class="pd-ok">Duplikasyon tespit edilmedi</div>
+        </div>
+        <div class="pipeline-detail-card card">
+          <div class="pd-label">Ortalama rating koruması</div>
+          <div class="pd-rule">Ham: 3.540 → Örneklem: 3.550</div>
+          <div class="pd-ok">Dağılım korundu</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── KS Doğrulama + Rating Dağılımı ── -->
+    <section class="container stat-section">
+      <span class="eyebrow"><span class="dot"></span> İstatistiksel Doğrulama</span>
+      <h2 class="section-title" style="font-size:28px;margin-top:12px">Kolmogorov-Smirnov Testi</h2>
+      <p class="section-sub">Örneklemin ana veriyi istatistiksel olarak temsil ettiği doğrulandı.</p>
+
+      <div class="ks-layout">
+        <div class="card ks-result-card">
+          <div class="ks-row">
+            <div class="ks-block">
+              <div class="ks-label">D İstatistiği</div>
+              <div class="ks-value mono">0.0037</div>
+            </div>
+            <div class="ks-block">
+              <div class="ks-label">p-değeri</div>
+              <div class="ks-value mono" style="color:var(--success)">1.0000</div>
+            </div>
+          </div>
+          <div class="ks-verdict">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            GECTI — p &gt; 0.05
+          </div>
+          <p class="ks-note">H0 hipotezi reddedilemez. Örneklem, ana veriyi istatistiksel olarak temsil etmektedir. Tüm rating sınıflarında maksimum sapma yalnızca %0.09'dur.</p>
+        </div>
+
+        <div class="card rdist-card">
+          <div class="rdist-title">Rating Dağılımı — Ana Veri vs. Örneklem</div>
+          <div class="rdist-list">
+            <div class="rdist-row">
+              <span class="rdist-star">5.0</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:54.94%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:55.28%"></div>
+              </div>
+              <span class="rdist-pct">%14.4</span>
+            </div>
+            <div class="rdist-row">
+              <span class="rdist-star">4.5</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:35.53%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:35.50%"></div>
+              </div>
+              <span class="rdist-pct">%9.3</span>
+            </div>
+            <div class="rdist-row rdist-row-top">
+              <span class="rdist-star">4.0</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:100%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:99.96%"></div>
+              </div>
+              <span class="rdist-pct" style="color:var(--gold);font-weight:700">%26.1</span>
+            </div>
+            <div class="rdist-row">
+              <span class="rdist-star">3.5</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:51.28%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:51.24%"></div>
+              </div>
+              <span class="rdist-pct">%13.4</span>
+            </div>
+            <div class="rdist-row">
+              <span class="rdist-star">3.0</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:72.34%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:72.30%"></div>
+              </div>
+              <span class="rdist-pct">%18.9</span>
+            </div>
+            <div class="rdist-row">
+              <span class="rdist-star">2.5</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:20.15%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:20.11%"></div>
+              </div>
+              <span class="rdist-pct">%5.3</span>
+            </div>
+            <div class="rdist-row">
+              <span class="rdist-star">2.0</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:24.24%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:24.20%"></div>
+              </div>
+              <span class="rdist-pct">%6.3</span>
+            </div>
+            <div class="rdist-row">
+              <span class="rdist-star">1.0</span>
+              <div class="rdist-bars">
+                <div class="rdist-bar rdist-bar-main"  style="width:11.32%"></div>
+                <div class="rdist-bar rdist-bar-samp"  style="width:11.28%"></div>
+              </div>
+              <span class="rdist-pct">%3.0</span>
+            </div>
+          </div>
+          <div class="rdist-legend">
+            <span class="rdist-leg-main"></span> Ana Veri
+            <span class="rdist-leg-samp" style="margin-left:12px"></span> Örneklem
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Model Doygunluk Analizi ── -->
+    <section class="container stat-section">
+      <span class="eyebrow"><span class="dot"></span> Öğrenme Eğrisi</span>
+      <h2 class="section-title" style="font-size:28px;margin-top:12px">Model Doygunluk Analizi</h2>
+      <p class="section-sub">KNN algoritması farklı örneklem boyutlarında test edilmiştir. %50 oranında doygunluğa ulaşılmıştır.</p>
+
+      <div class="saturation-layout">
+        <div class="table-wrap" style="flex:1">
+          <table class="films">
+            <thead>
+              <tr>
+                <th>Örneklem Oranı</th>
+                <th>Satır Sayısı</th>
+                <th style="text-align:right">MAE</th>
+                <th style="text-align:right">İyileşme</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="rank-cell">%10</td>
+                <td class="count-cell">376,604</td>
+                <td class="count-cell mono" style="text-align:right">0.4346</td>
+                <td class="count-cell" style="text-align:right;color:var(--text-3)">—</td>
+              </tr>
+              <tr>
+                <td class="rank-cell">%25</td>
+                <td class="count-cell">941,509</td>
+                <td class="count-cell mono" style="text-align:right">0.2540</td>
+                <td class="count-cell" style="text-align:right;color:var(--success)">−0.1806</td>
+              </tr>
+              <tr class="saturation-highlight">
+                <td class="rank-cell" style="color:var(--gold);font-weight:700">%50 ← doygunluk</td>
+                <td class="count-cell">1,883,018</td>
+                <td class="count-cell mono" style="text-align:right;color:var(--gold)">0.1915</td>
+                <td class="count-cell" style="text-align:right;color:var(--success)">−0.0625</td>
+              </tr>
+              <tr class="saturation-after">
+                <td class="rank-cell">%75</td>
+                <td class="count-cell">2,824,527</td>
+                <td class="count-cell mono" style="text-align:right">0.1891</td>
+                <td class="count-cell" style="text-align:right;color:var(--text-3)">−0.0024</td>
+              </tr>
+              <tr class="saturation-after">
+                <td class="rank-cell">%100</td>
+                <td class="count-cell">3,766,036</td>
+                <td class="count-cell mono" style="text-align:right">0.1688</td>
+                <td class="count-cell" style="text-align:right;color:var(--text-3)">−0.0203</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="saturation-callout card">
+          <div class="sc-value mono">0.0024</div>
+          <div class="sc-label">%50 → %75 MAE farkı</div>
+          <div class="sc-divider"></div>
+          <p class="sc-text">Kullanılan 4.7M satırlık örneklem, doygunluk noktasının <b>2.5 katı</b> büyüklüğündedir. Model fazlasıyla beslenmiştir.</p>
+          <div class="sc-divider"></div>
+          <div class="sc-params">
+            <div><span class="sc-param-key">n_neighbors</span><span class="sc-param-val mono">20</span></div>
+            <div><span class="sc-param-key">Metrik</span><span class="sc-param-val mono">Cosine</span></div>
+            <div><span class="sc-param-key">Algoritma</span><span class="sc-param-val mono">Brute</span></div>
+            <div><span class="sc-param-key">Matris</span><span class="sc-param-val mono">14,787 × 30,575</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── KNN Örnek Sonuçları ── -->
+    <section class="container stat-section">
+      <span class="eyebrow"><span class="dot"></span> Öneri Örnekleri</span>
+      <h2 class="section-title" style="font-size:28px;margin-top:12px">KNN Örnek Sonuçları</h2>
+      <p class="section-sub">İki farklı film için cosine similarity ile hesaplanan en yakın komşular.</p>
+
+      <div class="example-grid">
+        <div class="card example-card">
+          <div class="example-query">
+            <span class="mono" style="color:var(--gold)">Girdi</span> Toy Story (1995)
+          </div>
+          <ol class="example-list">
+            <li><span class="ex-title">Toy Story 2 (1999)</span><span class="ex-genre">Animation · Adventure</span><span class="ex-sim">%56.0</span></li>
+            <li><span class="ex-title">Star Wars: Ep. IV (1977)</span><span class="ex-genre">Action · Sci-Fi</span><span class="ex-sim">%55.1</span></li>
+            <li><span class="ex-title">Back to the Future (1985)</span><span class="ex-genre">Adventure · Comedy</span><span class="ex-sim">%54.1</span></li>
+            <li><span class="ex-title">Forrest Gump (1994)</span><span class="ex-genre">Comedy · Drama</span><span class="ex-sim">%53.4</span></li>
+            <li><span class="ex-title">Jurassic Park (1993)</span><span class="ex-genre">Action · Adventure</span><span class="ex-sim">%52.9</span></li>
+          </ol>
+          <div class="example-note">Geniş kitleye hitap eden filmler arasında daha dağınık benzerlik dağılımı gözlemlenmektedir.</div>
+        </div>
+
+        <div class="card example-card">
+          <div class="example-query">
+            <span class="mono" style="color:var(--gold)">Girdi</span> The Matrix (1999)
+          </div>
+          <ol class="example-list">
+            <li><span class="ex-title">LOTR: Fellowship (2001)</span><span class="ex-genre">Adventure · Fantasy</span><span class="ex-sim">%67.6</span></li>
+            <li><span class="ex-title">Fight Club (1999)</span><span class="ex-genre">Action · Crime · Drama</span><span class="ex-sim">%67.5</span></li>
+            <li><span class="ex-title">LOTR: Return of King (2003)</span><span class="ex-genre">Action · Adventure</span><span class="ex-sim">%65.7</span></li>
+            <li><span class="ex-title">LOTR: Two Towers (2002)</span><span class="ex-genre">Adventure · Fantasy</span><span class="ex-sim">%65.0</span></li>
+            <li><span class="ex-title">Star Wars: Ep. V (1980)</span><span class="ex-genre">Action · Sci-Fi</span><span class="ex-sim">%64.1</span></li>
+          </ol>
+          <div class="example-note">Niche kitleye sahip filmler arasında izleyici örtüşmesi daha yoğun, benzerlik skorları daha yüksek çıkmaktadır.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container about-section">
+      <h2 class="section-title">Proje Hakkında</h2>
+      <p class="section-sub">Veri Madenciliği dersi kapsamında geliştirilen, KNN tabanlı içerik filtreleme sistemi.</p>
+      <div class="about-grid">
+        <div class="card card-hover about-item">
+          <div class="about-key">Kullanılan Algoritma</div>
+          <div class="about-val">KNN <span class="muted">(K-Nearest Neighbors)</span></div>
+        </div>
+        <div class="card card-hover about-item">
+          <div class="about-key">Örnekleme Yöntemi</div>
+          <div class="about-val">Stratified <span class="muted">%15 — 4.7M satır</span></div>
+        </div>
+        <div class="card card-hover about-item">
+          <div class="about-key">Doğrulama Yöntemi</div>
+          <div class="about-val">KS Testi <span class="muted">Kolmogorov-Smirnov</span></div>
+        </div>
+        <div class="card card-hover about-item">
+          <div class="about-key">KS Sonucu</div>
+          <div class="about-val">D=0.0037 <span class="muted">p=1.0000 ✓</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" style="padding-bottom:48px">
+      <h2 class="section-title">Projenin Amacı</h2>
+      <p class="section-sub">Veri Madenciliği dersi proje hedefi ve metodolojisi.</p>
+      <div class="card purpose-card">
+        <p>
+          Bu proje, kullanıcıların <b>geçmiş film puanlama davranışlarını analiz ederek</b> kişiselleştirilmiş
+          film önerileri sunmayı amaçlamaktadır. <b>KNN (K-Nearest Neighbors)</b> algoritması kullanılarak benzer
+          kullanıcı profilleri tespit edilmekte ve bu profiller doğrultusunda <b>cosine similarity</b> ile
+          sıralanmış film önerileri üretilmektedir. Cold-start probleminden kaçınmak için 20'den az puanlama yapan
+          kullanıcılar ve 10'dan az puan alan filmler veri setinden çıkarılmıştır.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sistem Durumu -->
+  <section class="container">
+    <div class="card status-card" id="status-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="section-title" style="font-size:18px;margin-bottom:2px">Sistem Durumu</div>
+          <div style="font-size:13px;color:var(--text-3)">Döngüsel öğrenme sistemi — gerçek zamanlı</div>
+        </div>
+        <span id="training-badge" style="display:none" class="training-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Yeniden Eğitiliyor...
+        </span>
+      </div>
+      <div class="status-grid">
+        <div class="status-item">
+          <div class="s-label">Toplam Rating</div>
+          <div class="s-value" id="s-toplam">—</div>
+        </div>
+        <div class="status-item">
+          <div class="s-label">Yeni Feedback</div>
+          <div class="s-value pulse" id="s-yeni">—</div>
+        </div>
+        <div class="status-item">
+          <div class="s-label">Sonraki Eğitim</div>
+          <div class="s-value" id="s-kalan">—</div>
+        </div>
+        <div class="status-item">
+          <div class="s-label">Son Eğitim</div>
+          <div class="s-value" id="s-son" style="font-size:13px;margin-top:8px;color:var(--text-2)">—</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function fmt(n) { return Number(n).toLocaleString('tr-TR'); }
+    function loadStatus() {
+      fetch('/sistem-durumu')
+        .then(r => r.json())
+        .then(d => {
+          document.getElementById('s-toplam').textContent = fmt(d.toplam_rating);
+          document.getElementById('s-yeni').textContent   = fmt(d.yeni_rating);
+          document.getElementById('s-kalan').textContent  = fmt(d.sonraki_egitim_kac) + ' kaldi';
+          document.getElementById('s-son').textContent    = d.son_egitim || 'Henüz yapılmadı';
+          document.getElementById('training-badge').style.display = d.egitiliyor ? 'inline-flex' : 'none';
+        })
+        .catch(() => {});
+    }
+    loadStatus();
+    setInterval(loadStatus, 10000);
+  </script>
+
+  {% include '_footer.html' %}
+</div>
+</body>
+</html>

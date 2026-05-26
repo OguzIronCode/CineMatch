@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Büyük ham veri — 119 MB, GitHub sınırını aşar
+temiz_orneklem.csv
+# Kullanıcı feedback dosyası — Render'da ephemeral, yerel tutulur
+yeni_ratingler.csv
+# Geçici araç script
+precompute.py

@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Veri Analizi — CineMatch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app-shell">
+  {% include '_nav.html' %}
+
+  <main style="flex:1">
+    <section class="container page-header">
+      <span class="eyebrow"><span class="dot"></span> Exploratory Data Analysis</span>
+      <h1 class="section-title" style="font-size:44px;margin-top:16px">Veri Seti Analizi</h1>
+      <p class="section-sub" style="font-size:16px">
+        MovieLens ml-32m üzerinden alınan örneklemin istatistiksel özeti, dağılımı ve temizleme süreci.
+      </p>
+
+      <div class="metric-grid">
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Toplam Rating</div>
+          <div class="metric-value mono">32,000,204</div>
+          <div class="metric-sub">ml-32m full dataset</div>
+        </div>
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Kullanıcı Sayısı</div>
+          <div class="metric-value mono">200,948</div>
+          <div class="metric-sub">active users</div>
+        </div>
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Film Sayısı</div>
+          <div class="metric-value mono">84,432</div>
+          <div class="metric-sub">rated movies</div>
+        </div>
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Ortalama Rating</div>
+          <div class="metric-value mono">3.54 <span class="star">★</span></div>
+          <div class="metric-sub">population mean</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container">
+      <h2 class="section-title" style="font-size:22px">Rating Dağılımı</h2>
+      <p class="section-sub">Yüzdelik olarak rating sınıflarının frekansı — 4.0 puanı en sık verilen değer.</p>
+      <div class="card chart-card" id="chart-card">
+        {% set dist = [
+          ('0.5', 1.6, false), ('1.0', 3.0, false), ('1.5', 1.7, false),
+          ('2.0', 6.3, false), ('2.5', 5.3, false), ('3.0', 18.9, false),
+          ('3.5', 13.4, false), ('4.0', 26.1, true), ('4.5', 9.3, false),
+          ('5.0', 14.4, false)
+        ] %}
+        {% set max_pct = 26.1 %}
+        {% for label, pct, gold in dist %}
+        <div class="chart-row">
+          <div class="chart-label">{{ label }}<span class="s">★</span></div>
+          <div class="chart-bar-wrap">
+            <div class="chart-bar {{ 'gold' if gold else '' }}" data-pct="{{ (pct / max_pct * 100)|round(1) }}"></div>
+          </div>
+          <div class="chart-value {{ 'gold' if gold else '' }}">%{{ '%.1f'|format(pct) }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="container">
+      <h2 class="section-title" style="font-size:22px">En Çok Puanlanan 10 Film</h2>
+      <p class="section-sub">Rating sayısına göre top 10 — 90'ların drama'ları listenin başında.</p>
+      <div class="table-wrap" style="margin-bottom:56px">
+        <table class="films">
+          <thead>
+            <tr>
+              <th style="width:56px">Sıra</th>
+              <th>Film Adı</th>
+              <th>Tür</th>
+              <th style="text-align:right">Puanlama Sayısı</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set most_rated = [
+              ('Forrest Gump', 1994, 'Comedy / Drama / Romance / War', 81491),
+              ('Shawshank Redemption, The', 1994, 'Crime / Drama', 79672),
+              ('Pulp Fiction', 1994, 'Crime / Drama / Thriller', 77638),
+              ('Silence of the Lambs, The', 1991, 'Crime / Drama / Horror / Thriller', 74127),
+              ('Matrix, The', 1999, 'Action / Sci-Fi / Thriller', 72649),
+              ('Star Wars: Episode IV — A New Hope', 1977, 'Action / Adventure / Sci-Fi', 68791),
+              ('Jurassic Park', 1993, 'Action / Adventure / Sci-Fi / Thriller', 64144),
+              ('Braveheart', 1995, 'Action / Drama / War', 63782),
+              ('Terminator 2: Judgment Day', 1991, 'Action / Sci-Fi', 63439),
+              ("Schindler's List", 1993, 'Drama / War', 61200)
+            ] %}
+            {% for title, year, genres, count in most_rated %}
+            <tr>
+              <td class="rank-cell">#{{ loop.index }}</td>
+              <td class="film-name">{{ title }} <span class="yr">({{ year }})</span></td>
+              <td class="genres-cell">{{ genres }}</td>
+              <td class="count-cell">{{ '{:,}'.format(count) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="container">
+      <h2 class="section-title" style="font-size:22px">En Yüksek Ortalamaya Sahip 10 Film</h2>
+      <p class="section-sub">Cold-start filtresi sonrası ortalama puana göre sıralama.</p>
+      <div class="table-wrap" style="margin-bottom:56px">
+        <table class="films">
+          <thead>
+            <tr>
+              <th style="width:56px">Sıra</th>
+              <th>Film Adı</th>
+              <th>Tür</th>
+              <th style="text-align:right">Ort. Puan</th>
+              <th style="text-align:right">Puanlama Sayısı</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set highest = [
+              ('Shawshank Redemption, The', 1994, 'Crime / Drama', 4.43, 79672),
+              ('Godfather, The', 1972, 'Crime / Drama', 4.37, 52914),
+              ("Schindler's List", 1993, 'Drama / War', 4.30, 61200),
+              ('Rear Window', 1954, 'Mystery / Thriller', 4.28, 18421),
+              ('Casablanca', 1942, 'Drama / Romance / War', 4.27, 22910),
+              ('City of God', 2002, 'Action / Crime / Drama / Thriller', 4.26, 19833),
+              ('Dr. Strangelove', 1964, 'Comedy / War', 4.25, 24617),
+              ('Usual Suspects, The', 1995, 'Crime / Mystery / Thriller', 4.24, 47922),
+              ('Silence of the Lambs, The', 1991, 'Crime / Drama / Horror', 4.23, 74127),
+              ('12 Angry Men', 1957, 'Drama', 4.22, 16348)
+            ] %}
+            {% for title, year, genres, avg, count in highest %}
+            <tr>
+              <td class="rank-cell">#{{ loop.index }}</td>
+              <td class="film-name">{{ title }} <span class="yr">({{ year }})</span></td>
+              <td class="genres-cell">{{ genres }}</td>
+              <td class="avg-cell">★ {{ '%.2f'|format(avg) }}</td>
+              <td class="count-cell">{{ '{:,}'.format(count) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="container">
+      <h2 class="section-title" style="font-size:22px">Veri Temizleme Süreci</h2>
+      <p class="section-sub">4 aşamalı pipeline ile 32M satır → 4.7M temiz satır.</p>
+
+      <div class="clean-pipeline" id="clean-pipeline">
+
+        <!-- Kaynak -->
+        <div class="cp-node cp-source" data-cp="node">
+          <div class="cp-node-tag">Ham Veri</div>
+          <div class="cp-node-num"><span class="cp-cnt" data-target="32000204">0</span></div>
+          <div class="cp-node-sub">200,948 kullanici · 84,432 film · ort. 3.54 puan</div>
+        </div>
+
+        <!-- Adım 1 -->
+        <div class="cp-conn" data-cp="conn">
+          <div class="cp-conn-track"><div class="cp-conn-fill"></div></div>
+          <div class="cp-conn-dot"></div>
+        </div>
+        <div class="cp-step" data-cp="step">
+          <div class="cp-step-badge cp-badge-gold">1</div>
+          <div class="cp-step-body">
+            <div class="cp-step-head">
+              <span class="cp-step-name">Stratified Sampling</span>
+              <span class="cp-removed-tag">−<span class="cp-cnt" data-target="27200178">0</span> satir</span>
+            </div>
+            <div class="cp-step-desc">%15 katmanli ornekleme — her rating sinifi orantili temsil edildi</div>
+            <div class="cp-bar-row">
+              <div class="cp-bar-track"><div class="cp-bar-fill cp-fill-gold" data-w="15"></div></div>
+              <span class="cp-bar-label">%15 alindi · %85 birakti</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cp-mid" data-cp="mid">
+          <div class="cp-mid-line"></div>
+          <div class="cp-mid-pill"><span class="cp-cnt" data-target="4800026">0</span> satir kaldi</div>
+          <div class="cp-mid-line"></div>
+        </div>
+
+        <!-- Adım 2 -->
+        <div class="cp-conn" data-cp="conn">
+          <div class="cp-conn-track"><div class="cp-conn-fill"></div></div>
+          <div class="cp-conn-dot"></div>
+        </div>
+        <div class="cp-step" data-cp="step">
+          <div class="cp-step-badge cp-badge-green">2</div>
+          <div class="cp-step-body">
+            <div class="cp-step-head">
+              <span class="cp-step-name">Gecersiz Rating Kontrolu</span>
+              <span class="cp-ok-tag">−0 satir</span>
+            </div>
+            <div class="cp-step-desc">0.5–5.0 araligi disindaki degerler ve bos kayitlar kontrol edildi</div>
+            <div class="cp-bar-row">
+              <div class="cp-bar-track"><div class="cp-bar-fill cp-fill-green" data-w="100"></div></div>
+              <span class="cp-bar-label">%100 korundu</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cp-mid" data-cp="mid">
+          <div class="cp-mid-line"></div>
+          <div class="cp-mid-pill"><span class="cp-cnt" data-target="4800026">0</span> satir kaldi</div>
+          <div class="cp-mid-line"></div>
+        </div>
+
+        <!-- Adım 3 -->
+        <div class="cp-conn" data-cp="conn">
+          <div class="cp-conn-track"><div class="cp-conn-fill"></div></div>
+          <div class="cp-conn-dot"></div>
+        </div>
+        <div class="cp-step" data-cp="step">
+          <div class="cp-step-badge cp-badge-green">3</div>
+          <div class="cp-step-body">
+            <div class="cp-step-head">
+              <span class="cp-step-name">Duplikasyon Temizligi</span>
+              <span class="cp-ok-tag">−0 satir</span>
+            </div>
+            <div class="cp-step-desc">Ayni kullanicinin ayni filmi birden fazla puanladigi kayitlar kontrol edildi</div>
+            <div class="cp-bar-row">
+              <div class="cp-bar-track"><div class="cp-bar-fill cp-fill-green" data-w="100"></div></div>
+              <span class="cp-bar-label">%100 korundu</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cp-mid" data-cp="mid">
+          <div class="cp-mid-line"></div>
+          <div class="cp-mid-pill"><span class="cp-cnt" data-target="4800026">0</span> satir kaldi</div>
+          <div class="cp-mid-line"></div>
+        </div>
+
+        <!-- Adım 4 -->
+        <div class="cp-conn" data-cp="conn">
+          <div class="cp-conn-track"><div class="cp-conn-fill"></div></div>
+          <div class="cp-conn-dot"></div>
+        </div>
+        <div class="cp-step" data-cp="step">
+          <div class="cp-step-badge cp-badge-orange">4</div>
+          <div class="cp-step-body">
+            <div class="cp-step-head">
+              <span class="cp-step-name">Cold-start Filtresi</span>
+              <span class="cp-removed-tag">−<span class="cp-cnt" data-target="92481">0</span> satir</span>
+            </div>
+            <div class="cp-step-desc">Min 20 rating veren kullanicilar ve min 10 rating alan filmler korundu</div>
+            <div class="cp-bar-row">
+              <div class="cp-bar-track"><div class="cp-bar-fill cp-fill-orange" data-w="98.1"></div></div>
+              <span class="cp-bar-label">%98.1 korundu · %1.9 cikarildi</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Son bağlantı -->
+        <div class="cp-conn" data-cp="conn">
+          <div class="cp-conn-track"><div class="cp-conn-fill"></div></div>
+          <div class="cp-conn-dot"></div>
+        </div>
+
+        <!-- Sonuç -->
+        <div class="cp-node cp-result" data-cp="node">
+          <div class="cp-node-tag" style="color:var(--success)">Temiz Veri</div>
+          <div class="cp-node-num" style="color:var(--success)"><span class="cp-cnt" data-target="4707545">0</span></div>
+          <div class="cp-result-meta">
+            <div class="cp-result-chip">30,575 kullanici</div>
+            <div class="cp-result-chip">14,787 film</div>
+            <div class="cp-result-chip">ort. 3.55 puan</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="container" style="padding-bottom:64px;padding-top:56px">
+      <h2 class="section-title" style="font-size:22px">Örneklem Doğrulama</h2>
+      <p class="section-sub">İki yöntemle örneklemin orijinal popülasyonu temsil ettiğini doğruladık.</p>
+      <div class="validation-grid">
+        <div class="card val-card">
+          <div class="val-title">KS Testi Sonucu</div>
+          <div class="val-stats">
+            <div><div class="val-stat-label">D istatistiği</div><div class="val-stat-value">0.0037</div></div>
+            <div><div class="val-stat-label">p-değeri</div><div class="val-stat-value">1.0000</div></div>
+            <div><div class="val-stat-label">α</div><div class="val-stat-value">0.05</div></div>
+          </div>
+          <div class="pass-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            GEÇTİ
+          </div>
+          <p style="color:var(--text-2);font-size:13px;margin-top:16px;margin-bottom:0;line-height:1.6">
+            p &gt; α olduğundan H₀ reddedilemez. Örneklem, popülasyon dağılımıyla istatistiksel olarak uyumludur.
+          </p>
+        </div>
+        <div class="card val-card">
+          <div class="val-title">Yöntem</div>
+          <div style="margin-top:18px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+              <div style="width:36px;height:36px;border-radius:8px;background:var(--gold-soft);display:grid;place-items:center;border:1px solid var(--gold-strong)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+              </div>
+              <div>
+                <div style="font-size:16px;font-weight:700">Stratified Sampling</div>
+                <div style="font-size:12px;color:var(--text-2)">Tabakalı Örnekleme</div>
+              </div>
+            </div>
+            <p style="color:var(--text-2);font-size:14px;margin:0;line-height:1.6">
+              Her rating kategorisi (0.5 — 5.0) orijinal dağılımdaki oranında temsil edilecek şekilde örneklendi.
+              Bu sayede düşük frekanslı sınıflar (örn. 1.5★) küçültülmüş veri setinde kaybolmadı.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="container" style="padding-bottom:64px;padding-top:56px">
+      <h2 class="section-title" style="font-size:22px">Kullanılan Algoritmalar</h2>
+      <p class="section-sub">Üç farklı öneri yaklaşımının teknik karşılaştırması.</p>
+      <div class="algo-compare-grid">
+
+        <div class="card algo-card knn">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+            <div style="width:44px;height:44px;border-radius:10px;background:var(--gold-soft);display:grid;place-items:center;border:1px solid var(--gold-strong);flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F5C518" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>
+            </div>
+            <div>
+              <div class="algo-card-title">KNN</div>
+              <div class="algo-card-sub">K-Nearest Neighbors</div>
+            </div>
+          </div>
+          <div class="algo-props">
+            <div class="algo-prop">
+              <span class="pk">Yaklaşım</span>
+              <span class="pv">Collaborative Filtering</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Benzerlik Metriği</span>
+              <span class="pv">Cosine Similarity</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Komşu Sayısı (k)</span>
+              <span class="pv">20</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Girdi Matrisi</span>
+              <span class="pv">14,787 film × 30,575 kullanıcı</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Algoritma</span>
+              <span class="pv">Brute-force</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Kullanım</span>
+              <span class="pv" style="color:var(--gold)">Filme göre öneri</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card algo-card dt">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(16,185,129,0.12);display:grid;place-items:center;border:1px solid rgba(16,185,129,0.35);flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div>
+              <div class="algo-card-title">Decision Tree</div>
+              <div class="algo-card-sub">Karar Ağacı Sınıflandırıcı</div>
+            </div>
+          </div>
+          <div class="algo-props">
+            <div class="algo-prop">
+              <span class="pk">Yaklaşım</span>
+              <span class="pv">Content-Based Filtering</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Skor Metriği</span>
+              <span class="pv">predict_proba (güven skoru)</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Max Derinlik</span>
+              <span class="pv">8</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Özellik Sayısı</span>
+              <span class="pv">19 (17 tür + yıl + rating sayısı)</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Hedef</span>
+              <span class="pv">avg_rating &ge; 4.0 → yüksek puanlı</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Kullanım</span>
+              <span class="pv" style="color:var(--success)">Kriterlere göre öneri</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card algo-card nb">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+            <div style="width:44px;height:44px;border-radius:10px;background:rgba(139,92,246,0.12);display:grid;place-items:center;border:1px solid rgba(139,92,246,0.35);flex-shrink:0">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>
+            </div>
+            <div>
+              <div class="algo-card-title">Naive Bayes</div>
+              <div class="algo-card-sub">Multinomial Naive Bayes</div>
+            </div>
+          </div>
+          <div class="algo-props">
+            <div class="algo-prop">
+              <span class="pk">Yaklaşım</span>
+              <span class="pv">Probabilistic Classification</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Smoothing</span>
+              <span class="pv">Laplace (alpha=1.0)</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Özellik Sayısı</span>
+              <span class="pv">18 (17 tür + log rating sayısı)</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Hedef Sınıflar</span>
+              <span class="pv">Düşük / Orta / Yüksek</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Skor Metriği</span>
+              <span class="pv">P(Yüksek | tür özellikleri)</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">5-Fold CV</span>
+              <span class="pv">%64.4 ± 0.7</span>
+            </div>
+            <div class="algo-prop">
+              <span class="pk">Kullanım</span>
+              <span class="pv" style="color:var(--purple)">Tür tercihine göre öneri</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+    <!-- ── KNN Öğrenme Eğrisi ── -->
+    <section class="container" style="padding-top:56px">
+      <span class="eyebrow"><span class="dot"></span> Learning Curve</span>
+      <h2 class="section-title" style="font-size:22px;margin-top:12px">KNN Öğrenme Eğrisi</h2>
+      <p class="section-sub">Farklı örneklem boyutlarında hesaplanan MAE — model %50 oranında doygunluğa ulaşmaktadır.</p>
+
+      <div class="card chart-card" style="padding:28px 28px 20px">
+        <div style="height:280px">
+          <canvas id="learningCurveChart"></canvas>
+        </div>
+      </div>
+
+      <div class="metric-grid" style="margin-top:16px;margin-bottom:0">
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Baslangic MAE</div>
+          <div class="metric-value mono" style="color:#F87171">0.4346</div>
+          <div class="metric-sub">%10 orneklem (376K satir)</div>
+        </div>
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Doygunluk Noktasi</div>
+          <div class="metric-value mono" style="color:var(--gold)">0.1915</div>
+          <div class="metric-sub">%50 — 1.88M satir</div>
+        </div>
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Son MAE</div>
+          <div class="metric-value mono" style="color:var(--success)">0.1688</div>
+          <div class="metric-sub">%100 — 3.77M satir</div>
+        </div>
+        <div class="card card-hover metric-card">
+          <div class="metric-label"><span class="dot"></span> Doygunluk Sonrasi Kazanim</div>
+          <div class="metric-value mono">0.0227</div>
+          <div class="metric-sub">%50 → %100 MAE farki</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Algoritma Performans Paneli ── -->
+    <section class="container" style="padding-top:56px">
+      <span class="eyebrow"><span class="dot"></span> Model Performance</span>
+      <h2 class="section-title" style="font-size:22px;margin-top:12px">Algoritma Performans Metrikleri</h2>
+      <p class="section-sub">Her algoritma kendi çerçevesinde ölçülmüştür — metrikler doğrudan karşılaştırılabilir değildir.</p>
+
+      <div class="perf-grid">
+
+        <!-- KNN -->
+        <div class="card perf-card">
+          <div class="perf-header perf-knn">
+            <span class="perf-algo-name">KNN</span>
+            <span class="perf-algo-type">Collaborative Filtering</span>
+          </div>
+          <div class="perf-body">
+            <div class="perf-metric-row">
+              <span class="perf-key">Son MAE</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-knn" style="width:0" data-w="83"></div>
+              </div>
+              <span class="perf-val mono">0.1688</span>
+            </div>
+            <div class="perf-metric-row">
+              <span class="perf-key">Doygunluk</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-knn" style="width:0" data-w="50"></div>
+              </div>
+              <span class="perf-val mono">%50</span>
+            </div>
+            <div class="perf-metric-row">
+              <span class="perf-key">Benzerlik (ort.)</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-knn" style="width:0" data-w="60"></div>
+              </div>
+              <span class="perf-val mono">~%60</span>
+            </div>
+            <div class="perf-params">
+              <div class="perf-param"><span>n_neighbors</span><span class="mono">20</span></div>
+              <div class="perf-param"><span>Metrik</span><span class="mono">Cosine</span></div>
+              <div class="perf-param"><span>Matris</span><span class="mono">14,787 × 30,575</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Decision Tree -->
+        <div class="card perf-card">
+          <div class="perf-header perf-dt">
+            <span class="perf-algo-name">Decision Tree</span>
+            <span class="perf-algo-type">Content-Based Filtering</span>
+          </div>
+          <div class="perf-body">
+            <div class="perf-metric-row">
+              <span class="perf-key">Pozitif Sinif</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-dt" style="width:0" data-w="49"></div>
+              </div>
+              <span class="perf-val mono">~%49</span>
+            </div>
+            <div class="perf-metric-row">
+              <span class="perf-key">Max Derinlik</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-dt" style="width:0" data-w="80"></div>
+              </div>
+              <span class="perf-val mono">8</span>
+            </div>
+            <div class="perf-metric-row">
+              <span class="perf-key">Ozellik Sayisi</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-dt" style="width:0" data-w="95"></div>
+              </div>
+              <span class="perf-val mono">19</span>
+            </div>
+            <div class="perf-params">
+              <div class="perf-param"><span>Hedef</span><span class="mono">avg &ge; 4.0</span></div>
+              <div class="perf-param"><span>min_samples_leaf</span><span class="mono">10</span></div>
+              <div class="perf-param"><span>Cikti</span><span class="mono">predict_proba</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Naive Bayes -->
+        <div class="card perf-card">
+          <div class="perf-header perf-nb">
+            <span class="perf-algo-name">Naive Bayes</span>
+            <span class="perf-algo-type">Probabilistic Classification</span>
+          </div>
+          <div class="perf-body">
+            <div class="perf-metric-row">
+              <span class="perf-key">CV Dogruluk</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-nb" style="width:0" data-w="64.4"></div>
+              </div>
+              <span class="perf-val mono">%64.4</span>
+            </div>
+            <div class="perf-metric-row">
+              <span class="perf-key">Std Sapma</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-nb" style="width:0" data-w="7"></div>
+              </div>
+              <span class="perf-val mono">±0.7</span>
+            </div>
+            <div class="perf-metric-row">
+              <span class="perf-key">Sinif Sayisi</span>
+              <div class="perf-bar-wrap">
+                <div class="perf-bar perf-bar-nb" style="width:0" data-w="30"></div>
+              </div>
+              <span class="perf-val mono">3</span>
+            </div>
+            <div class="perf-params">
+              <div class="perf-param"><span>Model</span><span class="mono">MultinomialNB</span></div>
+              <div class="perf-param"><span>Alpha</span><span class="mono">1.0 (Laplace)</span></div>
+              <div class="perf-param"><span>CV</span><span class="mono">5-Fold</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ── NB 5-Fold CV ── -->
+    <section class="container" style="padding-top:56px;padding-bottom:80px">
+      <span class="eyebrow"><span class="dot"></span> Cross Validation</span>
+      <h2 class="section-title" style="font-size:22px;margin-top:12px">Naive Bayes — 5-Fold CV Detayi</h2>
+      <p class="section-sub">Her fold için dogruluk skoru ve genel ortalama. Ortalama %64.4, std ±0.7.</p>
+
+      <div class="cv-layout">
+        <div class="card chart-card" style="padding:28px 28px 20px;flex:1">
+          <div style="height:260px">
+            <canvas id="cvChart"></canvas>
+          </div>
+        </div>
+        <div class="cv-summary card">
+          <div class="cv-sum-title">Ozet</div>
+          <div class="cv-sum-rows">
+            <div class="cv-sum-row">
+              <span class="cv-sum-key">Ortalama</span>
+              <span class="cv-sum-val mono" style="color:var(--purple)">%64.4</span>
+            </div>
+            <div class="cv-sum-row">
+              <span class="cv-sum-key">Std Sapma</span>
+              <span class="cv-sum-val mono">±0.7</span>
+            </div>
+            <div class="cv-sum-row">
+              <span class="cv-sum-key">Min Fold</span>
+              <span class="cv-sum-val mono">%63.6</span>
+            </div>
+            <div class="cv-sum-row">
+              <span class="cv-sum-key">Max Fold</span>
+              <span class="cv-sum-val mono">%65.3</span>
+            </div>
+            <div class="cv-sum-row">
+              <span class="cv-sum-key">Sinif Sayisi</span>
+              <span class="cv-sum-val mono">3</span>
+            </div>
+          </div>
+          <div class="cv-note">
+            Dusuk, Orta ve Yuksek puan siniflandirmasi. 3 sinifli bir problemde rastgele tahmin dogrulugu %33 oldugu dusunulurse %64.4 anlamli bir performans sergilemektedir.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  {% include '_footer.html' %}
+</div>
+
+<script>
+  // ── Number count-up helper ──────────────────────────────────────────────
+  function cpCountUp(el, target, duration) {
+    function fmtNum(n) { return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmtNum(Math.round(target * ease));
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = fmtNum(target);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // ── Animated Clean Pipeline ─────────────────────────────────────────────
+  (function() {
+    const pipeline = document.getElementById('clean-pipeline');
+    if (!pipeline) return;
+    let fired = false;
+    const obs = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !fired) {
+        fired = true; obs.disconnect();
+        const els = Array.from(pipeline.querySelectorAll('[data-cp]'));
+        let delay = 0;
+        const GAP = 190;
+        els.forEach(el => {
+          const t = el.dataset.cp;
+          setTimeout(() => {
+            el.classList.add('cp-visible');
+            el.querySelectorAll('.cp-cnt[data-target]').forEach(c => {
+              cpCountUp(c, parseInt(c.dataset.target), 1100);
+            });
+            if (t === 'step') {
+              el.querySelectorAll('.cp-bar-fill[data-w]').forEach(b => {
+                setTimeout(() => { b.style.width = b.dataset.w + '%'; }, 120);
+              });
+            }
+          }, delay);
+          delay += GAP;
+        });
+      }
+    }, { threshold: 0.12 });
+    obs.observe(pipeline);
+  })();
+
+  window.addEventListener('load', () => {
+    // Rating dağılımı bar animasyonu
+    document.querySelectorAll('.chart-bar[data-pct]').forEach(bar => {
+      setTimeout(() => { bar.style.width = bar.dataset.pct + '%'; }, 80);
+    });
+
+    // Performans barları animasyonu
+    document.querySelectorAll('.perf-bar[data-w]').forEach((bar, i) => {
+      setTimeout(() => { bar.style.width = bar.dataset.w + '%'; }, 100 + i * 40);
+    });
+
+    Chart.defaults.color       = '#9BA3AF';
+    Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.font.size   = 12;
+
+    // ── KNN Öğrenme Eğrisi ──────────────────────────────────────────────────
+    new Chart(document.getElementById('learningCurveChart'), {
+      type: 'line',
+      data: {
+        labels: ['%10\n376K', '%25\n941K', '%50\n1.88M', '%75\n2.82M', '%100\n3.77M'],
+        datasets: [
+          {
+            label: 'MAE',
+            data: [0.4346, 0.2540, 0.1915, 0.1891, 0.1688],
+            borderColor: '#F5C518',
+            backgroundColor: 'rgba(245,197,24,0.08)',
+            borderWidth: 2.5,
+            pointBackgroundColor: ['#9BA3AF','#9BA3AF','#F5C518','#9BA3AF','#10B981'],
+            pointBorderColor:     ['#9BA3AF','#9BA3AF','#F5C518','#9BA3AF','#10B981'],
+            pointRadius: [5,5,9,5,7],
+            pointHoverRadius: 8,
+            tension: 0.35,
+            fill: true,
+          },
+          {
+            label: 'Doygunluk Esigi',
+            data: [null, null, 0.1915, 0.1915, 0.1915],
+            borderColor: 'rgba(245,197,24,0.35)',
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { usePointStyle: true, pointStyleWidth: 10, padding: 16 } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.dataset.label + ': ' + (ctx.parsed.y !== null ? ctx.parsed.y.toFixed(4) : '—')
+            }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: {
+            beginAtZero: false, min: 0.10, max: 0.50,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { callback: v => v.toFixed(2) }
+          }
+        }
+      }
+    });
+
+    // ── NB 5-Fold CV ────────────────────────────────────────────────────────
+    const foldScores = [63.6, 64.2, 64.8, 65.3, 64.1];
+    const mean = 64.4;
+    new Chart(document.getElementById('cvChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Fold 1', 'Fold 2', 'Fold 3', 'Fold 4', 'Fold 5'],
+        datasets: [
+          {
+            label: 'CV Dogruluk (%)',
+            data: foldScores,
+            backgroundColor: foldScores.map(v => v >= mean ? 'rgba(139,92,246,0.7)' : 'rgba(139,92,246,0.4)'),
+            borderColor: '#8B5CF6',
+            borderWidth: 1,
+            borderRadius: 6,
+          },
+          {
+            label: 'Ortalama (%64.4)',
+            data: [mean, mean, mean, mean, mean],
+            type: 'line',
+            borderColor: 'rgba(245,197,24,0.8)',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            fill: false,
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { usePointStyle: true, pointStyleWidth: 10, padding: 16 } },
+          tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': %' + ctx.parsed.y.toFixed(1) } }
+        },
+        scales: {
+          x: { grid: { display: false } },
+          y: {
+            min: 60, max: 68,
+            grid: { color: 'rgba(255,255,255,0.05)' },
+            ticks: { callback: v => '%' + v }
+          }
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>
