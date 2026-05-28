@@ -154,7 +154,7 @@ def tmdb_detay_getir(movie_id):
         "overview": "",
         "imdb_url": ("https://www.imdb.com/title/" + imdb_id + "/") if imdb_id else "",
         "tmdb_url": ("https://www.themoviedb.org/movie/" + str(tmdb_id)) if tmdb_id else "",
-        "play_url": ("https://www.play.imdb.com/title/" + imdb_id + "/") if imdb_id else "",
+        "play_url": ("https://www.playimdb.com/title/" + imdb_id + "/") if imdb_id else "",
     }
     if not tmdb_id:
         return detay
