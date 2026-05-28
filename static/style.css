@@ -528,10 +528,9 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   transition: all 160ms ease; letter-spacing: 0.02em;
 }
 .watch-btn:hover {
-  opacity: 0.88;
+  opacity: 0.88; color: #0A0E1A;
   transform: translateY(-1px);
   box-shadow: 0 8px 20px -8px var(--gold-strong);
-  color: #0A0E1A;
 }
 
 /* Film external links */
