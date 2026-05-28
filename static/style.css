@@ -411,6 +411,15 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 
 /* Feedback buttons */
 .feedback-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.watch-btn-inline {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: auto;
+  padding: 7px 14px; border-radius: 8px;
+  background: var(--gold); color: #0A0E1A;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+  transition: all 140ms ease; white-space: nowrap;
+}
+.watch-btn-inline:hover { opacity: 0.85; color: #0A0E1A; transform: translateY(-1px); }
 .fb-btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 7px 14px; border-radius: 8px;
@@ -517,20 +526,6 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
-}
-
-/* Watch button */
-.watch-btn {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  width: 100%; padding: 11px 16px; border-radius: 8px;
-  background: var(--gold); color: #0A0E1A;
-  font-weight: 700; font-size: 14px; text-decoration: none;
-  transition: all 160ms ease; letter-spacing: 0.02em;
-}
-.watch-btn:hover {
-  opacity: 0.88; color: #0A0E1A;
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px -8px var(--gold-strong);
 }
 
 /* Film external links */

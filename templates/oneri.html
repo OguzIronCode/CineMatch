@@ -283,12 +283,6 @@
           {% if film.overview %}
           <p class="film-overview">{{ film.overview }}</p>
           {% endif %}
-          {% if film.play_url %}
-          <a href="{{ film.play_url }}" target="_blank" rel="noopener" class="watch-btn">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
-            İzle
-          </a>
-          {% endif %}
           {% if film.imdb_url or film.tmdb_url %}
           <div class="film-links">
             {% if film.imdb_url %}
@@ -314,7 +308,12 @@
                     onclick="sendFeedback(this, {{ film.movie_id }}, 1.0)">
               <span>&#128078;</span> Beğenmedim
             </button>
-            <span class="fb-toast">Geri bildiriminiz kaydedildi &#10003;</span>
+            {% if film.play_url %}
+            <a href="{{ film.play_url }}" target="_blank" rel="noopener" class="watch-btn-inline">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+              İzle
+            </a>
+            {% endif %}
           </div>
         </div>
         {% endfor %}
@@ -487,9 +486,8 @@
 
   // ── Feedback ──────────────────────────────────────────────────────────────
   function sendFeedback(btn, movieId, rating) {
-    const row   = btn.closest('.feedback-row');
-    const btns  = row.querySelectorAll('.fb-btn');
-    const toast = row.querySelector('.fb-toast');
+    const row  = btn.closest('.feedback-row');
+    const btns = row.querySelectorAll('.fb-btn');
 
     btns.forEach(b => { b.disabled = true; });
 
@@ -502,7 +500,6 @@
     .then(data => {
       if (data.status === 'ok') {
         btn.classList.add(rating >= 3 ? 'liked' : 'disliked');
-        toast.classList.add('visible');
       } else {
         btns.forEach(b => { b.disabled = false; });
       }
