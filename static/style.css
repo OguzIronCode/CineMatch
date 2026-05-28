@@ -1072,3 +1072,240 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   background: var(--surface-2); border: 1px solid var(--border);
   padding: 7px 14px; border-radius: 8px;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — MOBILE NAVIGATION
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 140ms ease;
+  flex-shrink: 0;
+}
+.nav-hamburger:hover { background: var(--surface); }
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-2);
+  border-radius: 2px;
+  transition: transform 280ms ease, opacity 280ms ease, background 280ms ease;
+}
+.nav.menu-open .nav-hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); background: var(--gold); }
+.nav.menu-open .nav-hamburger span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav.menu-open .nav-hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); background: var(--gold); }
+
+.nav-mobile-menu {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 340ms cubic-bezier(0.16, 1, 0.3, 1);
+  border-top: 1px solid transparent;
+}
+.nav.menu-open .nav-mobile-menu {
+  max-height: 520px;
+  border-top-color: var(--border);
+}
+
+.nav-mobile-links {
+  padding: 8px 0 16px;
+  display: flex;
+  flex-direction: column;
+}
+.nav-mobile-link {
+  display: flex;
+  align-items: center;
+  padding: 13px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-2);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-soft);
+  transition: color 140ms ease;
+}
+.nav-mobile-link:last-child { border-bottom: none; }
+.nav-mobile-link:hover { color: var(--text); }
+.nav-mobile-link.active { color: var(--gold); font-weight: 600; }
+.nav-mobile-link-danger { color: #C96060 !important; }
+.nav-mobile-link-danger:hover { color: #d97070 !important; }
+.nav-mobile-divider { height: 1px; background: var(--border); margin: 6px 0; }
+.nav-mobile-link-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  margin-top: 12px;
+  padding: 11px 24px;
+  background: var(--gold);
+  color: #0A0E1A;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  text-decoration: none;
+  transition: opacity 160ms ease;
+}
+.nav-mobile-link-cta:hover { opacity: 0.88; }
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — GLOBAL LAYOUT
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .container { padding: 0 16px; }
+}
+
+/* ─── Hero ─────────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .hero { padding: 64px 0 40px; }
+}
+@media (max-width: 480px) {
+  .hero { padding: 48px 0 32px; }
+  .hero-sub { font-size: 17px; }
+  .hero-desc { font-size: 14px; }
+  .hero-cta { flex-direction: column; align-items: stretch; }
+  .hero-cta .btn { width: 100%; justify-content: center; }
+}
+
+/* ─── Section spacing ──────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .stat-section { padding: 36px 0 0; }
+  .page-header { padding: 32px 0 16px; }
+  .about-section { padding: 36px 0 16px; }
+  .section-title { font-size: 22px; }
+  .section-sub { font-size: 14px; }
+}
+
+/* ─── Page header h1 ───────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .page-header h1[style] { font-size: 32px !important; }
+}
+
+/* ─── Tables ───────────────────────────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table.films { min-width: 460px; }
+}
+
+/* ─── Info cards (already at 880px, add 480 single col) ────────────────────── */
+@media (max-width: 480px) {
+  .info-card { padding: 20px; flex-direction: row; align-items: center; }
+  .info-value { font-size: 28px; }
+}
+
+/* ─── About grid ───────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .about-item { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .about-val { font-size: 16px; }
+}
+
+/* ─── Purpose card ─────────────────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .purpose-card { padding: 20px 20px 20px 28px; }
+  .purpose-card p { font-size: 14px; }
+}
+
+/* ─── Pipeline ─────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .pipeline-row { flex-direction: column; align-items: stretch; gap: 4px; }
+  .pipeline-arrow {
+    transform: rotate(90deg);
+    align-self: center;
+    padding: 0;
+    margin: -2px 0;
+  }
+  .pipeline-step { min-width: unset; }
+}
+
+/* ─── KS layout (already at 860px) ─────────────────────────────────────────── */
+
+/* ─── Saturation layout ────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .saturation-layout { flex-direction: column; }
+  .saturation-callout { min-width: unset; width: 100%; }
+}
+
+/* ─── CV layout ────────────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .cv-layout { flex-direction: column; }
+  .cv-summary { min-width: unset; width: 100%; }
+}
+
+/* ─── Example grid (already at 780px) ──────────────────────────────────────── */
+
+/* ─── Status card ──────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .status-card { padding: 18px 16px; }
+  .status-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — RECOMMENDATIONS PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 560px) {
+  .recform-card { padding: 20px 16px; }
+  .form-row-single { max-width: 100%; }
+  .algo-banner { padding: 14px 16px; gap: 12px; }
+}
+
+/* ─── Film card ────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .film-card { padding: 16px; }
+  .poster-wrap {
+    width: calc(100% + 32px);
+    margin: -16px -16px 0 -16px;
+  }
+  .film-title { font-size: 16px; }
+  .film-title-row { padding-right: 26px; }
+  .sim-label { min-width: 60px; font-size: 10px; }
+}
+
+/* ─── Results header ───────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .results-header { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* ─── Film external links ──────────────────────────────────────────────────── */
+@media (max-width: 360px) {
+  .film-links { flex-direction: column; }
+  .film-link-btn { justify-content: center; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — DASHBOARD / AUTH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 560px) {
+  .dashboard-user-card { flex-direction: column; align-items: flex-start; }
+  .gecmis-controls { flex-direction: column; gap: 12px; }
+  .gecmis-controls-left { flex-direction: column; gap: 8px; }
+}
+
+@media (max-width: 480px) {
+  .auth-card { padding: 20px 16px; }
+  .metric-value { font-size: 24px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — ANIMATED PIPELINE (analiz)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .clean-pipeline { margin: 24px auto 0; padding-bottom: 36px; }
+  .cp-node { padding: 18px 20px; }
+  .cp-node-num { font-size: 28px; }
+  .cp-step { padding: 16px 18px; gap: 12px; }
+  .cp-step-badge { width: 32px; height: 32px; font-size: 14px; }
+}

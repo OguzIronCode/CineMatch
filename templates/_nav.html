@@ -1,4 +1,4 @@
-<nav class="nav">
+<nav class="nav" id="main-nav">
   <div class="container nav-inner">
     <a href="/" class="logo" style="text-decoration:none;color:inherit">
       <div class="logo-mark">C</div>
@@ -59,11 +59,42 @@
         <a href="/kayit" class="nav-cta">Kayıt Ol</a>
       {% endif %}
     </div>
+
+    <!-- Hamburger (mobile only) -->
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menüyü aç/kapat">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  <!-- Mobile menu -->
+  <div class="nav-mobile-menu" id="nav-mobile-menu">
+    <div class="container">
+      <div class="nav-mobile-links">
+        <a href="/"       class="nav-mobile-link {{ 'active' if request.path == '/' else '' }}">Ana Sayfa</a>
+        <a href="/analiz" class="nav-mobile-link {{ 'active' if request.path == '/analiz' else '' }}">Veri Analizi</a>
+        <a href="/oneri"  class="nav-mobile-link {{ 'active' if request.path == '/oneri' else '' }}">Film Önerisi</a>
+
+        {% if session.get('user_id') %}
+          <div class="nav-mobile-divider"></div>
+          <a href="/profil"    class="nav-mobile-link">Profil Ayarları</a>
+          <a href="/dashboard" class="nav-mobile-link">Dashboard</a>
+          <a href="/gecmis"    class="nav-mobile-link">Öneri Geçmişi</a>
+          <a href="/cikis"     class="nav-mobile-link nav-mobile-link-danger">Çıkış Yap</a>
+        {% else %}
+          <div class="nav-mobile-divider"></div>
+          <a href="/giris" class="nav-mobile-link {{ 'active' if request.path == '/giris' else '' }}">Giriş Yap</a>
+          <a href="/kayit" class="nav-mobile-link-cta">Kayıt Ol</a>
+        {% endif %}
+      </div>
+    </div>
   </div>
 </nav>
 
 <script>
 (function() {
+  // ── Search ────────────────────────────────────────────────────────────────
   const input    = document.getElementById('nav-search-input');
   const dropdown = document.getElementById('nav-search-dropdown');
   const wrap     = document.getElementById('nav-search-wrap');
@@ -90,8 +121,9 @@
     if (!wrap.contains(e.target)) dropdown.style.display = 'none';
   });
 
+  // ── Profile dropdown ──────────────────────────────────────────────────────
   const profileWrap = document.getElementById('nav-profile-wrap');
-  const profileBtn = document.getElementById('nav-profile-btn');
+  const profileBtn  = document.getElementById('nav-profile-btn');
   if (profileBtn) {
     profileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -99,6 +131,25 @@
     });
     document.addEventListener('click', e => {
       if (!profileWrap.contains(e.target)) profileWrap.classList.remove('open');
+    });
+  }
+
+  // ── Hamburger menu ────────────────────────────────────────────────────────
+  const hamburger = document.getElementById('nav-hamburger');
+  const mainNav   = document.getElementById('main-nav');
+  if (hamburger && mainNav) {
+    hamburger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      mainNav.classList.toggle('menu-open');
+    });
+    document.addEventListener('click', e => {
+      if (!mainNav.contains(e.target)) mainNav.classList.remove('menu-open');
+    });
+    document.querySelectorAll('.nav-mobile-link, .nav-mobile-link-cta').forEach(link => {
+      link.addEventListener('click', () => mainNav.classList.remove('menu-open'));
+    });
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) mainNav.classList.remove('menu-open');
     });
   }
 
