@@ -519,6 +519,21 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   -webkit-box-orient: vertical;
 }
 
+/* Watch button */
+.watch-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; padding: 11px 16px; border-radius: 8px;
+  background: var(--gold); color: #0A0E1A;
+  font-weight: 700; font-size: 14px; text-decoration: none;
+  transition: all 160ms ease; letter-spacing: 0.02em;
+}
+.watch-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -8px var(--gold-strong);
+  color: #0A0E1A;
+}
+
 /* Film external links */
 .film-links { display: flex; gap: 8px; flex-wrap: wrap; }
 .film-link-btn {

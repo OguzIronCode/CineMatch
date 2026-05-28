@@ -154,6 +154,7 @@ def tmdb_detay_getir(movie_id):
         "overview": "",
         "imdb_url": ("https://www.imdb.com/title/" + imdb_id + "/") if imdb_id else "",
         "tmdb_url": ("https://www.themoviedb.org/movie/" + str(tmdb_id)) if tmdb_id else "",
+        "play_url": ("https://www.imdb.play.com/title/" + imdb_id + "/") if imdb_id else "",
     }
     if not tmdb_id:
         return detay
@@ -315,6 +316,7 @@ def dt_oneri(tur, min_puan_raw, yil_baslangic, yil_bitis, oneri_sayisi):
             overview=detay["overview"],
             imdb_url=detay["imdb_url"],
             tmdb_url=detay["tmdb_url"],
+            play_url=detay["play_url"],
         ))
     return results
 
@@ -369,6 +371,7 @@ def nb_oneri(tur, min_puan_raw, yil_baslangic, yil_bitis, oneri_sayisi):
             overview=detay["overview"],
             imdb_url=detay["imdb_url"],
             tmdb_url=detay["tmdb_url"],
+            play_url=detay["play_url"],
         ))
     return results
 
@@ -620,6 +623,7 @@ def oneri():
             overview=detay["overview"],
             imdb_url=detay["imdb_url"],
             tmdb_url=detay["tmdb_url"],
+            play_url=detay["play_url"],
         ))
 
         if len(results) >= oneri_sayisi:
