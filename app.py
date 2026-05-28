@@ -698,6 +698,27 @@ def feedback():
     return jsonify({"status": "ok", "total_new": total})
 
 
+@app.route("/izle/<int:movie_id>")
+def izle(movie_id):
+    movie_row = MOVIES[MOVIES["movieId"] == movie_id]
+    if movie_row.empty:
+        return redirect(url_for("oneri"))
+    title   = movie_row.iloc[0]["title"]
+    imdb_id = IMDB_LOOKUP.get(movie_id, "")
+    if not imdb_id:
+        return redirect(url_for("oneri"))
+    detay    = tmdb_detay_getir(movie_id)
+    play_url = "https://www.playimdb.com/title/" + imdb_id + "/"
+    return render_template("izleme.html",
+        movie_id=movie_id,
+        title=title,
+        play_url=play_url,
+        poster=detay["poster"],
+        imdb_url=detay["imdb_url"],
+        tmdb_url=detay["tmdb_url"],
+    )
+
+
 @app.route("/detay/<int:movie_id>")
 def film_detay(movie_id):
     tmdb_id = TMDB_LOOKUP.get(movie_id)

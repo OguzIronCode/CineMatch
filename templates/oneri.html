@@ -309,10 +309,10 @@
               <span>&#128078;</span> Beğenmedim
             </button>
             {% if film.play_url %}
-            <button class="watch-btn-inline" onclick="openWatchModal('{{ film.play_url }}',event)">
+            <a href="/izle/{{ film.movie_id }}" class="watch-btn-inline" onclick="event.stopPropagation()">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
               İzle
-            </button>
+            </a>
             {% endif %}
           </div>
         </div>
@@ -665,8 +665,8 @@
       const actions = document.getElementById('detail-actions');
       actions.innerHTML = '';
       if (d.play_url) {
-        actions.innerHTML += '<button class="detail-action-btn detail-action-watch" onclick="openWatchModal(\'' + d.play_url + '\')">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>İzle</button>';
+        actions.innerHTML += '<a href="/izle/' + movieId + '" class="detail-action-btn detail-action-watch">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>İzle</a>';
       }
       if (d.imdb_url) {
         actions.innerHTML += '<a href="' + d.imdb_url + '" target="_blank" rel="noopener" class="detail-action-btn detail-action-imdb">IMDb\'de Gör</a>';

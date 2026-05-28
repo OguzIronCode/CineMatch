@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{{ title }} — CineMatch İzle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"/>
+</head>
+<body class="wp-body">
+
+<div class="wp-shell">
+
+  <!-- ── TOP BAR ─────────────────────────────────────────────────────────── -->
+  <header class="wp-topbar">
+    <div class="wp-topbar-left">
+      <a href="/oneri" class="wp-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Geri
+      </a>
+      <a href="/" class="wp-logo-link">
+        <div class="logo-mark" style="width:26px;height:26px;font-size:14px;border-radius:6px">C</div>
+        <span class="wp-logo-text">CineMatch</span>
+      </a>
+    </div>
+
+    <div class="wp-topbar-center">
+      <span class="wp-film-name">{{ title }}</span>
+    </div>
+
+    <div class="wp-topbar-right">
+      <span class="wp-live-badge">
+        <span class="wp-live-dot"></span> CANLI
+      </span>
+      <span class="wp-viewers-badge">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span id="viewer-count">1</span> izleyici
+      </span>
+    </div>
+  </header>
+
+  <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
+  <div class="wp-main">
+
+    <!-- Video alanı -->
+    <div class="wp-player-col">
+      <div class="wp-player-wrap">
+        <iframe
+          id="wp-iframe"
+          src="{{ play_url }}"
+          frameborder="0"
+          allowfullscreen
+          allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+        ></iframe>
+
+        <!-- Engel mesajı -->
+        <div class="wp-blocked" id="wp-blocked" style="display:none">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.3"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          <p class="wp-blocked-title">Site gömülü oynatmayı engelliyor</p>
+          <p class="wp-blocked-sub">Filmi yeni sekmede açabilirsin</p>
+          <a href="{{ play_url }}" target="_blank" rel="noopener" class="btn btn-primary" style="margin-top:12px;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+            Filmi İzle
+          </a>
+        </div>
+      </div>
+
+      <!-- Yüzen emoji katmanı -->
+      <div class="wp-emoji-float" id="wp-emoji-float"></div>
+    </div>
+
+    <!-- Sohbet sidebar -->
+    <aside class="wp-sidebar" id="wp-sidebar">
+      <div class="wp-sidebar-head">
+        <span>💬 Sohbet</span>
+        <button class="wp-sidebar-close" onclick="toggleSidebar()" title="Gizle">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="wp-messages" id="wp-messages">
+        <div class="wp-sys-msg">🎬 İzleme başladı! Mesaj yaz, emoji gönder.</div>
+      </div>
+
+      <div class="wp-msg-input-wrap">
+        <input
+          class="wp-msg-input"
+          id="wp-msg-input"
+          type="text"
+          placeholder="Mesaj yaz…"
+          maxlength="200"
+          autocomplete="off"
+          onkeydown="if(event.key==='Enter')sendMsg()"
+        />
+        <button class="wp-send-btn" onclick="sendMsg()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Sidebar kapalıyken aç butonu -->
+    <button class="wp-sidebar-open" id="wp-sidebar-open" onclick="toggleSidebar()" style="display:none" title="Sohbeti aç">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+  </div>
+
+  <!-- ── BOTTOM BAR ───────────────────────────────────────────────────────── -->
+  <div class="wp-bottombar">
+    <div class="wp-emoji-bar">
+      {% for e in ['😂','❤️','😱','👏','😢','🔥','🎉'] %}
+      <button class="wp-emoji-btn" onclick="floatEmoji('{{ e }}')">{{ e }}</button>
+      {% endfor %}
+    </div>
+
+    <div class="wp-bottom-sep"></div>
+
+    <button class="wp-action-btn" onclick="toggleNotes()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Not Al
+    </button>
+
+    {% if imdb_url %}
+    <a href="{{ imdb_url }}" target="_blank" rel="noopener" class="wp-action-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      IMDb
+    </a>
+    {% endif %}
+
+    <a href="/oneri?film_adi={{ title }}&auto=1" class="wp-action-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      Benzer Filmler
+    </a>
+  </div>
+
+</div>
+
+<!-- ── NOT PANELİ ──────────────────────────────────────────────────────────── -->
+<div class="wp-note-panel" id="wp-note-panel" style="display:none">
+  <div class="wp-note-head">
+    <span>📝 Notlarım</span>
+    <button onclick="toggleNotes()">✕</button>
+  </div>
+  <textarea class="wp-note-ta" id="wp-note-ta" placeholder="Bu sahne için bir şey yaz…" rows="3"></textarea>
+  <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="saveNote()">Kaydet</button>
+  <div class="wp-notes-list" id="wp-notes-list"></div>
+</div>
+
+<script>
+// ── Kullanıcı ─────────────────────────────────────────────────────────────
+const ME_RAW  = '{{ session.get("user_email", "") }}';
+const ME      = ME_RAW ? ME_RAW.split('@')[0] : 'İzleyici';
+const PALETTE = ['#C4963A','#3DAF84','#6B96D6','#9070D0','#C96060','#3EA5BE','#C8862A'];
+const MY_CLR  = PALETTE[[...ME].reduce((a,c)=>a+c.charCodeAt(0),0) % PALETTE.length];
+
+// ── Iframe engel kontrolü ─────────────────────────────────────────────────
+const wpIframe  = document.getElementById('wp-iframe');
+const wpBlocked = document.getElementById('wp-blocked');
+
+wpIframe.addEventListener('load', () => {
+  try {
+    // cross-origin erişim → hata fırlatır → iframe çalışıyor
+    const test = wpIframe.contentWindow.location.href;
+    // Aynı origin olup about:blank ise engel var
+    if (test === 'about:blank') {
+      wpIframe.style.display  = 'none';
+      wpBlocked.style.display = 'flex';
+    }
+  } catch {
+    // cross-origin erişim engeli = iframe yüklendi, sorun yok
+  }
+});
+
+// ── Sohbet ───────────────────────────────────────────────────────────────
+const msgBox = document.getElementById('wp-messages');
+
+function sendMsg() {
+  const inp  = document.getElementById('wp-msg-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  appendMsg(ME, text, MY_CLR);
+}
+
+function appendMsg(user, text, color, isEmoji) {
+  const now  = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const div  = document.createElement('div');
+  div.className = 'wp-msg' + (isEmoji ? ' wp-msg-emoji' : '');
+  div.innerHTML =
+    '<div class="wp-msg-meta">' +
+      '<span class="wp-msg-user" style="color:' + color + '">' + esc(user) + '</span>' +
+      '<span class="wp-msg-time">' + time + '</span>' +
+    '</div>' +
+    '<p class="wp-msg-text">' + esc(text) + '</p>';
+  msgBox.appendChild(div);
+  msgBox.scrollTop = msgBox.scrollHeight;
+}
+
+// ── Emoji tepkileri ───────────────────────────────────────────────────────
+const floatArea = document.getElementById('wp-emoji-float');
+
+function floatEmoji(emoji) {
+  const el = document.createElement('span');
+  el.className   = 'wp-floating-emoji';
+  el.textContent = emoji;
+  el.style.left  = (10 + Math.random() * 80) + '%';
+  el.style.animationDuration = (2.5 + Math.random() * 1.5) + 's';
+  floatArea.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+  appendMsg(ME, emoji, MY_CLR, true);
+}
+
+// ── Sidebar ───────────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const sb   = document.getElementById('wp-sidebar');
+  const open = document.getElementById('wp-sidebar-open');
+  const hide = sb.style.display === 'none';
+  sb.style.display   = hide ? 'flex' : 'none';
+  open.style.display = hide ? 'none' : 'flex';
+}
+
+// ── Notlar ────────────────────────────────────────────────────────────────
+const notes = [];
+
+function toggleNotes() {
+  const p = document.getElementById('wp-note-panel');
+  p.style.display = p.style.display === 'none' ? 'flex' : 'none';
+  if (p.style.display === 'flex') document.getElementById('wp-note-ta').focus();
+}
+
+function saveNote() {
+  const ta   = document.getElementById('wp-note-ta');
+  const text = ta.value.trim();
+  if (!text) return;
+  ta.value = '';
+  const time = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
+  notes.push({text, time});
+  renderNotes();
+}
+
+function renderNotes() {
+  document.getElementById('wp-notes-list').innerHTML = notes.map((n, i) =>
+    '<div class="wp-note-item"><span class="wp-note-num">' + (i+1) + '</span>' +
+    '<div><span class="wp-note-time">' + n.time + '</span><p>' + esc(n.text) + '</p></div></div>'
+  ).join('');
+}
+
+// ── Yardımcı ─────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+
+</body>
+</html>
