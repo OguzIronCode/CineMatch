@@ -309,10 +309,10 @@
               <span>&#128078;</span> Beğenmedim
             </button>
             {% if film.play_url %}
-            <a href="{{ film.play_url }}" target="_blank" rel="noopener" class="watch-btn-inline">
+            <button class="watch-btn-inline" onclick="openWatchModal('{{ film.play_url }}',event)">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
               İzle
-            </a>
+            </button>
             {% endif %}
           </div>
         </div>
@@ -324,6 +324,29 @@
   </main>
 
   {% include '_footer.html' %}
+</div>
+
+<!-- ── Watch Modal ── -->
+<div id="watch-modal" class="watch-modal" onclick="closeWatchModal(event)">
+  <div class="watch-box">
+    <div class="watch-modal-header">
+      <span class="watch-modal-title">Film İzleniyor</span>
+      <button class="trailer-close" onclick="closeWatchModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="watch-embed-wrap">
+      <iframe id="watch-iframe" src="" frameborder="0" allowfullscreen
+              allow="autoplay; fullscreen; encrypted-media"></iframe>
+      <div id="watch-blocked" class="watch-blocked" style="display:none">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        <p>Bu site gömülü oynatmayı engelliyor.</p>
+        <a id="watch-fallback-link" href="#" target="_blank" rel="noopener" class="detail-action-btn detail-action-watch">
+          Siteye Git ve İzle
+        </a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── Film Detail Modal ── -->
@@ -523,8 +546,59 @@
   }
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') { closeTrailer(); closeDetailModal(); }
+    if (e.key === 'Escape') { closeTrailer(); closeDetailModal(); closeWatchModal(); }
   });
+
+  // ── Watch Modal ────────────────────────────────────────────────────────────
+  function openWatchModal(url, e) {
+    if (e) e.stopPropagation();
+    const modal   = document.getElementById('watch-modal');
+    const iframe  = document.getElementById('watch-iframe');
+    const blocked = document.getElementById('watch-blocked');
+    const link    = document.getElementById('watch-fallback-link');
+
+    iframe.src            = '';
+    blocked.style.display = 'none';
+    iframe.style.display  = 'block';
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // X-Frame-Options engeli kontrolü (2 sn içinde yüklenirse tamam)
+    link.href = url;
+    const timer = setTimeout(() => {
+      // iframe boş kaldıysa engel var demektir
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc || doc.URL === 'about:blank') throw new Error();
+      } catch {
+        iframe.style.display  = 'none';
+        blocked.style.display = 'flex';
+      }
+    }, 2500);
+
+    iframe.onload = () => {
+      clearTimeout(timer);
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow.document;
+        if (!doc || doc.body === null || doc.URL === 'about:blank') {
+          iframe.style.display  = 'none';
+          blocked.style.display = 'flex';
+        }
+      } catch {
+        // cross-origin — yüklenmiş demek, iframe çalışıyor
+      }
+    };
+
+    iframe.src = url;
+  }
+
+  function closeWatchModal(e) {
+    if (e && e.target !== document.getElementById('watch-modal')) return;
+    const iframe = document.getElementById('watch-iframe');
+    iframe.src   = '';
+    document.getElementById('watch-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
 
   // ── Film Detail Modal ──────────────────────────────────────────────────────
   function handleCardClick(e, movieId) {
@@ -591,8 +665,8 @@
       const actions = document.getElementById('detail-actions');
       actions.innerHTML = '';
       if (d.play_url) {
-        actions.innerHTML += '<a href="' + d.play_url + '" target="_blank" rel="noopener" class="detail-action-btn detail-action-watch">' +
-          '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>İzle</a>';
+        actions.innerHTML += '<button class="detail-action-btn detail-action-watch" onclick="openWatchModal(\'' + d.play_url + '\')">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>İzle</button>';
       }
       if (d.imdb_url) {
         actions.innerHTML += '<a href="' + d.imdb_url + '" target="_blank" rel="noopener" class="detail-action-btn detail-action-imdb">IMDb\'de Gör</a>';
