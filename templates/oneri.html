@@ -203,7 +203,7 @@
       <div class="film-grid">
         {% for film in results %}
         {% set rank = loop.index %}
-        <div class="card card-hover film-card">
+        <div class="card card-hover film-card" onclick="handleCardClick(event,{{ film.movie_id }})" style="cursor:pointer">
           <div class="poster-wrap" onclick="openTrailer({{ film.movie_id }}, '{{ film.title | replace("'","\\'" ) }}')">
             <img class="film-afis"
                  src="{{ film.poster }}"
@@ -324,6 +324,46 @@
   </main>
 
   {% include '_footer.html' %}
+</div>
+
+<!-- ── Film Detail Modal ── -->
+<div id="detail-modal" class="detail-modal" onclick="closeDetailModal(event)">
+  <div class="detail-box" id="detail-box">
+    <button class="detail-close-btn" onclick="closeDetailModal()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="detail-backdrop" id="detail-backdrop"></div>
+    <div id="detail-loading" class="detail-loading">
+      <div class="trailer-spinner"></div>
+      <span>Yükleniyor…</span>
+    </div>
+    <div id="detail-body" class="detail-body" style="display:none">
+      <img id="detail-poster" class="detail-poster" src="" alt=""/>
+      <div class="detail-info">
+        <h2 class="detail-title" id="detail-title"></h2>
+        <div class="detail-meta-row">
+          <span class="detail-year" id="detail-year"></span>
+          <span class="detail-sep" id="detail-sep1">·</span>
+          <span class="detail-runtime" id="detail-runtime"></span>
+          <span class="detail-sep">·</span>
+          <span class="detail-rating" id="detail-rating"></span>
+        </div>
+        <div class="detail-genres" id="detail-genres"></div>
+        <p class="detail-overview" id="detail-overview"></p>
+        <div class="detail-credits">
+          <div class="detail-credit-row">
+            <span class="detail-credit-label">Yönetmen</span>
+            <span class="detail-credit-value" id="detail-director"></span>
+          </div>
+          <div class="detail-credit-row">
+            <span class="detail-credit-label">Oyuncular</span>
+            <span class="detail-credit-value" id="detail-cast"></span>
+          </div>
+        </div>
+        <div class="detail-actions" id="detail-actions"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── Trailer Modal ── -->
@@ -482,7 +522,105 @@
     content.querySelectorAll('iframe').forEach(el => el.remove());
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeTrailer(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeTrailer(); closeDetailModal(); }
+  });
+
+  // ── Film Detail Modal ──────────────────────────────────────────────────────
+  function handleCardClick(e, movieId) {
+    if (e.target.closest('.poster-wrap, button, a, .feedback-row')) return;
+    openDetailModal(movieId);
+  }
+
+  async function openDetailModal(movieId) {
+    const modal   = document.getElementById('detail-modal');
+    const box     = document.getElementById('detail-box');
+    const loading = document.getElementById('detail-loading');
+    const body    = document.getElementById('detail-body');
+
+    loading.innerHTML = '<div class="trailer-spinner"></div><span>Yükleniyor…</span>';
+    loading.style.display = 'flex';
+    body.style.display    = 'none';
+    box.classList.remove('has-backdrop');
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    try {
+      const res = await fetch('/detay/' + movieId);
+      const d   = await res.json();
+      if (d.hata) throw new Error(d.hata);
+
+      // Backdrop
+      const bd = document.getElementById('detail-backdrop');
+      if (d.backdrop) {
+        bd.style.backgroundImage = 'url(' + d.backdrop + ')';
+        bd.style.display = 'block';
+        box.classList.add('has-backdrop');
+      } else {
+        bd.style.display = 'none';
+      }
+
+      // Poster
+      document.getElementById('detail-poster').src = d.poster;
+      document.getElementById('detail-poster').alt = d.title;
+
+      // Başlık
+      document.getElementById('detail-title').textContent = d.title;
+
+      // Yıl / Süre / Puan
+      const year    = d.release_date ? d.release_date.slice(0, 4) : '';
+      const runtime = d.runtime      ? (Math.floor(d.runtime / 60) + 's ' + (d.runtime % 60) + 'dk') : '';
+      const rating  = d.vote_average ? ('★ ' + d.vote_average.toFixed(1) + ' / 10') : '';
+      document.getElementById('detail-year').textContent    = year;
+      document.getElementById('detail-runtime').textContent = runtime;
+      document.getElementById('detail-rating').textContent  = rating;
+      document.getElementById('detail-sep1').style.display  = runtime ? '' : 'none';
+
+      // Türler
+      document.getElementById('detail-genres').innerHTML =
+        d.genres.map(g => '<span class="detail-genre-badge">' + escHtmlD(g) + '</span>').join('');
+
+      // Açıklama
+      document.getElementById('detail-overview').textContent = d.overview || 'Açıklama bulunamadı.';
+
+      // Yönetmen / Oyuncu
+      document.getElementById('detail-director').textContent = d.directors.join(', ') || '—';
+      document.getElementById('detail-cast').textContent     = d.cast.join(', ')      || '—';
+
+      // Aksiyon butonları
+      const actions = document.getElementById('detail-actions');
+      actions.innerHTML = '';
+      if (d.play_url) {
+        actions.innerHTML += '<a href="' + d.play_url + '" target="_blank" rel="noopener" class="detail-action-btn detail-action-watch">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>İzle</a>';
+      }
+      if (d.imdb_url) {
+        actions.innerHTML += '<a href="' + d.imdb_url + '" target="_blank" rel="noopener" class="detail-action-btn detail-action-imdb">IMDb\'de Gör</a>';
+      }
+      actions.innerHTML += '<button class="detail-action-btn detail-action-trailer" onclick="openTrailerFromDetail(' + movieId + ',\'' + escHtmlD(d.title) + '\')">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21" fill="currentColor"/></svg>Fragman</button>';
+
+      loading.style.display = 'none';
+      body.style.display    = 'flex';
+    } catch(err) {
+      loading.innerHTML = '<div style="color:var(--text-2);font-size:14px">Bilgi yüklenemedi.</div>';
+    }
+  }
+
+  function closeDetailModal(e) {
+    if (e && e.target !== document.getElementById('detail-modal')) return;
+    document.getElementById('detail-modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function openTrailerFromDetail(movieId, title) {
+    closeDetailModal();
+    setTimeout(() => openTrailer(movieId, title), 120);
+  }
+
+  function escHtmlD(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
 
   // ── Feedback ──────────────────────────────────────────────────────────────
   function sendFeedback(btn, movieId, rating) {

@@ -698,6 +698,47 @@ def feedback():
     return jsonify({"status": "ok", "total_new": total})
 
 
+@app.route("/detay/<int:movie_id>")
+def film_detay(movie_id):
+    tmdb_id = TMDB_LOOKUP.get(movie_id)
+    imdb_id = IMDB_LOOKUP.get(movie_id, "")
+    if not tmdb_id:
+        return jsonify({"hata": "Film bulunamadi"}), 404
+    try:
+        url = "%s%d?api_key=%s&language=en-US" % (TMDB_BASE, tmdb_id, TMDB_API_KEY)
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            data = json.loads(resp.read())
+        curl = "%s%d/credits?api_key=%s&language=en-US" % (TMDB_BASE, tmdb_id, TMDB_API_KEY)
+        with urllib.request.urlopen(curl, timeout=5) as resp:
+            credits = json.loads(resp.read())
+
+        directors = [c["name"] for c in credits.get("crew", []) if c["job"] == "Director"]
+        cast      = [c["name"] for c in credits.get("cast", [])[:7]]
+        poster_p  = data.get("poster_path")
+        backdrop_p = data.get("backdrop_path")
+
+        return jsonify({
+            "title":          data.get("title", ""),
+            "original_title": data.get("original_title", ""),
+            "overview":       data.get("overview", ""),
+            "poster":         (TMDB_IMG + poster_p) if poster_p else POSTER_YOK,
+            "backdrop":       ("https://image.tmdb.org/t/p/w1280" + backdrop_p) if backdrop_p else "",
+            "release_date":   data.get("release_date", ""),
+            "runtime":        data.get("runtime"),
+            "vote_average":   round(float(data.get("vote_average") or 0), 1),
+            "vote_count":     data.get("vote_count", 0),
+            "genres":         [g["name"] for g in data.get("genres", [])],
+            "directors":      directors,
+            "cast":           cast,
+            "imdb_url":       ("https://www.imdb.com/title/" + imdb_id + "/") if imdb_id else "",
+            "play_url":       ("https://www.playimdb.com/title/" + imdb_id + "/") if imdb_id else "",
+            "tmdb_url":       "https://www.themoviedb.org/movie/" + str(tmdb_id),
+        })
+    except Exception as e:
+        print("[FILM_DETAY] movieId=%s -> HATA: %s" % (movie_id, e))
+        return jsonify({"hata": str(e)}), 500
+
+
 @app.route("/trailer/<int:movie_id>")
 def trailer(movie_id):
     tmdb_id = TMDB_LOOKUP.get(movie_id)

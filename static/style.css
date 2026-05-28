@@ -859,6 +859,143 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   letter-spacing: 0.04em; text-shadow: 0 1px 4px rgba(0,0,0,0.7);
 }
 
+/* ── Film Detail Modal ── */
+.detail-modal {
+  position: fixed; inset: 0; z-index: 1001;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.24s ease;
+  padding: 20px;
+  overflow-y: auto;
+}
+.detail-modal.open { opacity: 1; pointer-events: all; }
+
+.detail-box {
+  width: 100%; max-width: 860px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7);
+  transform: translateY(18px) scale(0.97);
+  transition: transform 0.24s ease;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.detail-modal.open .detail-box { transform: translateY(0) scale(1); }
+
+.detail-close-btn {
+  position: absolute; top: 14px; right: 14px; z-index: 10;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(0,0,0,0.55); border: none; cursor: pointer;
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); transition: background 0.15s ease;
+}
+.detail-close-btn:hover { background: rgba(0,0,0,0.85); }
+
+.detail-backdrop {
+  display: none; width: 100%; height: 210px;
+  background-size: cover; background-position: center 30%;
+  position: relative;
+}
+.detail-backdrop::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(10,14,26,0.15) 0%, var(--surface) 100%);
+}
+
+.detail-loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
+  padding: 72px 32px; color: var(--text-2); font-size: 14px;
+}
+
+.detail-body {
+  display: flex; gap: 28px; padding: 28px;
+  align-items: flex-start;
+}
+.detail-box.has-backdrop .detail-body { padding-top: 20px; }
+
+.detail-poster {
+  width: 170px; flex-shrink: 0;
+  border-radius: 10px; object-fit: cover;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.detail-box.has-backdrop .detail-poster {
+  margin-top: -90px; position: relative; z-index: 1;
+}
+
+.detail-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+
+.detail-title {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.02em;
+  margin: 0; line-height: 1.25; color: var(--text);
+}
+
+.detail-meta-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.detail-year    { font-size: 14px; color: var(--text-2); font-weight: 500; }
+.detail-runtime { font-size: 14px; color: var(--text-2); font-weight: 500; }
+.detail-sep     { color: var(--text-3); font-size: 14px; }
+.detail-rating  { font-size: 14px; font-weight: 700; color: var(--gold); font-family: 'JetBrains Mono', monospace; }
+
+.detail-genres { display: flex; gap: 6px; flex-wrap: wrap; }
+.detail-genre-badge {
+  padding: 4px 10px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+  background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2);
+}
+
+.detail-overview {
+  font-size: 14px; color: var(--text-2); line-height: 1.72; margin: 0;
+  max-height: 150px; overflow-y: auto;
+  scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+}
+
+.detail-credits { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; background: var(--surface-2); border-radius: 10px; border: 1px solid var(--border-soft); }
+.detail-credit-row { display: flex; gap: 12px; align-items: baseline; }
+.detail-credit-label {
+  font-size: 11px; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  min-width: 68px; flex-shrink: 0;
+}
+.detail-credit-value { font-size: 13px; color: var(--text); font-weight: 500; line-height: 1.5; }
+
+.detail-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 2px; }
+.detail-action-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 10px 18px; border-radius: 8px;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+  transition: all 150ms ease; cursor: pointer; font-family: inherit; border: none;
+}
+.detail-action-watch {
+  background: var(--gold); color: #0A0E1A;
+}
+.detail-action-watch:hover { opacity: 0.88; transform: translateY(-1px); color: #0A0E1A; }
+.detail-action-imdb {
+  background: var(--surface-2); color: var(--gold);
+  border: 1px solid rgba(196,150,58,0.32);
+}
+.detail-action-imdb:hover { background: var(--gold-soft); }
+.detail-action-trailer {
+  background: var(--surface-2); color: var(--text-2);
+  border: 1px solid var(--border);
+}
+.detail-action-trailer:hover { border-color: var(--gold); color: var(--text); }
+
+@media (max-width: 620px) {
+  .detail-body { flex-direction: column; padding: 16px; gap: 18px; }
+  .detail-poster { width: 130px; }
+  .detail-box.has-backdrop .detail-poster { margin-top: -65px; }
+  .detail-backdrop { height: 160px; }
+  .detail-title { font-size: 18px; }
+  .detail-overview { max-height: 120px; }
+}
+
 /* ── Trailer Modal ── */
 .trailer-modal {
   position: fixed; inset: 0; z-index: 1000;
