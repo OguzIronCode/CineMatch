@@ -759,7 +759,8 @@ def oda_olustur():
 def oda(kod, movie_id):
     kod = kod.upper().strip()
     ROOMS.setdefault(kod, {"film_id": movie_id, "host_id": None})
-    is_host = ROOMS[kod].get("host_id") == aktif_kullanici()
+    uid     = aktif_kullanici()
+    is_host = bool(uid and ROOMS[kod].get("host_id") == uid)
     ctx = _izleme_context(movie_id, oda_kodu=kod, is_host=is_host)
     if not ctx:
         return redirect(url_for("oneri"))

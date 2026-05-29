@@ -38,10 +38,8 @@
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <span id="viewer-count">1</span>
       </span>
-      {% if oda_kodu %}
-      <span class="wp-conn-dot" id="wp-conn-dot"></span>
-      {% endif %}
-      <button class="wp-sidebar-toggle-btn" id="chat-toggle-btn" onclick="toggleSidebar()">
+      {% if oda_kodu %}<span class="wp-conn-dot" id="wp-conn-dot"></span>{% endif %}
+      <button class="wp-sidebar-toggle-btn" onclick="toggleSidebar()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       </button>
     </div>
@@ -50,8 +48,11 @@
   <!-- ── MAIN ──────────────────────────────────────────────────────────── -->
   <div class="wp-main">
 
-    <!-- Video oynatıcı -->
+    <!-- ── OYNATICI ALANI (host = film, misafir = jitsi ana) ── -->
     <div class="wp-player-col">
+
+      {% if is_host %}
+      <!-- HOST: Film iframe -->
       <div class="wp-player-wrap">
         <iframe id="wp-iframe" src="{{ play_url }}" frameborder="0" allowfullscreen
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"></iframe>
@@ -64,37 +65,67 @@
           </a>
         </div>
       </div>
+
+      <!-- Host: ekran paylaşım rehberi -->
+      {% if oda_kodu %}
+      <div class="wp-host-hint" id="wp-host-hint">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+        Arkadaşın filmi <strong>senin ekranından</strong> izleyecek —
+        <strong>Görüntülü</strong> butonuna bas ve Jitsi'de
+        <strong>Ekranı Paylaş</strong>'a tıkla.
+        <button onclick="this.parentElement.style.display='none'" class="wp-hint-close">✕</button>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <!-- MİSAFİR: Jitsi ana alan (host'un ekranı burada görünür) -->
+      <div class="wp-guest-area" id="wp-guest-area">
+        <div class="wp-guest-placeholder" id="wp-guest-placeholder">
+          <div class="wp-guest-emoji">🎬</div>
+          <h3 class="wp-guest-title">{{ title }}</h3>
+          <p class="wp-guest-sub">Host ekranını paylaştığında film burada görünecek</p>
+          <button class="btn btn-primary" onclick="joinVideoCall()" style="margin-top:16px;gap:8px">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            Görüşmeye Katıl
+          </button>
+        </div>
+        <div id="jitsi-main" class="wp-jitsi-main" style="display:none"></div>
+      </div>
+      {% endif %}
+
       <div class="wp-emoji-float" id="wp-emoji-float"></div>
     </div>
 
-    <!-- Sağ panel -->
+    <!-- ── SIDEBAR ── -->
     <aside class="wp-sidebar" id="wp-sidebar">
 
       <!-- Davet linki -->
       {% if oda_kodu %}
       <div class="wp-invite-section">
         <div class="wp-invite-label">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
           Arkadaşını davet et
         </div>
         <div class="wp-invite-row">
-          <span class="wp-invite-code" id="invite-code">{{ oda_kodu }}</span>
+          <span class="wp-invite-code">{{ oda_kodu }}</span>
           <button class="wp-copy-btn" id="wp-copy-btn" onclick="copyLink()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             <span id="copy-text">Kopyala</span>
           </button>
         </div>
       </div>
       {% endif %}
 
-      <!-- Görüntülü görüşme paneli -->
+      <!-- HOST: Jitsi sidebar paneli -->
+      {% if is_host %}
       <div class="wp-video-panel" id="wp-video-panel" style="display:none">
         <div class="wp-video-panel-head">
-          <span>📹 Görüntülü Görüşme</span>
+          <span>📹 Görüntülü — Ekranını paylaş!</span>
           <button onclick="stopVideo()" class="wp-panel-close-btn">✕</button>
         </div>
         <div id="jitsi-container" class="wp-jitsi-wrap"></div>
       </div>
+      {% endif %}
 
       <!-- Sohbet -->
       <div class="wp-sidebar-head">
@@ -105,7 +136,11 @@
       </div>
 
       <div class="wp-messages" id="wp-messages">
-        <div class="wp-sys-msg">🎬 İzleme başladı!{% if oda_kodu %} Linki arkadaşınla paylaş.{% endif %}</div>
+        <div class="wp-sys-msg">
+          {% if is_host %}🎬 Filmi başlat, ekranını paylaş ve arkadaşını davet et!
+          {% else %}👋 Odaya katıldın! "Görüşmeye Katıl"a basarak filmi izle.
+          {% endif %}
+        </div>
       </div>
 
       <div class="wp-msg-input-wrap">
@@ -127,15 +162,27 @@
       {% endfor %}
     </div>
     <div class="wp-bottom-sep"></div>
+
+    {% if is_host %}
+    <!-- Host: görüntülü sidebar'da açar -->
     <button class="wp-action-btn" id="video-toggle-btn" onclick="toggleVideo()">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
       <span class="wp-btn-text">Görüntülü</span>
     </button>
+    {% else %}
+    <!-- Misafir: görüntülü ana alana açar -->
+    <button class="wp-action-btn" id="video-toggle-btn" onclick="joinVideoCall()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      <span class="wp-btn-text">Görüşmeye Katıl</span>
+    </button>
+    {% endif %}
+
     <button class="wp-action-btn" onclick="toggleNotes()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="wp-btn-text">Not Al</span>
     </button>
-    {% if imdb_url %}
+
+    {% if is_host and imdb_url %}
     <a href="{{ imdb_url }}" target="_blank" rel="noopener" class="wp-action-btn">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       <span class="wp-btn-text">IMDb</span>
@@ -145,11 +192,11 @@
 
 </div>
 
-<!-- ── Video görüşme daveti bildirimi ──────────────────────────────────────── -->
+<!-- ── Video davet bildirimi ──────────────────────────────────────────────── -->
 <div class="wp-video-invite" id="wp-video-invite" style="display:none">
   <div class="wp-video-invite-icon">📹</div>
   <div class="wp-video-invite-body">
-    <p class="wp-video-invite-title"><strong id="inviter-name"></strong> görüntülü görüşme başlatıyor</p>
+    <p class="wp-video-invite-title"><strong id="inviter-name"></strong> görüntülü başlatıyor</p>
     <p class="wp-video-invite-sub">Katılmak ister misin?</p>
   </div>
   <div class="wp-video-invite-actions">
@@ -158,7 +205,7 @@
   </div>
 </div>
 
-<!-- ── NOT PANELİ ─────────────────────────────────────────────────────────── -->
+<!-- ── Not paneli ─────────────────────────────────────────────────────────── -->
 <div class="wp-note-panel" id="wp-note-panel" style="display:none">
   <div class="wp-note-head">
     <span>📝 Notlar</span>
@@ -169,11 +216,12 @@
   <div class="wp-notes-list" id="wp-notes-list"></div>
 </div>
 
-<!-- Mobil sidebar overlay arka planı -->
+<!-- Mobil overlay -->
 <div class="wp-sidebar-overlay" id="wp-sidebar-overlay" onclick="toggleSidebar()"></div>
 
 <script>
 // ── Sabitler ──────────────────────────────────────────────────────────────
+const IS_HOST      = {{ 'true' if is_host else 'false' }};
 const ODA_KODU     = '{{ oda_kodu }}';
 const MOVIE_ID     = {{ movie_id }};
 const SUPABASE_URL = '{{ supabase_url }}';
@@ -185,244 +233,216 @@ const PALETTE      = ['#C4963A','#3DAF84','#6B96D6','#9070D0','#C96060','#3EA5BE
 const MY_CLR       = PALETTE[[...ME].reduce((a,c)=>a+c.charCodeAt(0),0) % PALETTE.length];
 const JITSI_ROOM   = 'CineMatch-' + (ODA_KODU || 'Solo' + MOVIE_ID);
 
-// ── Supabase Broadcast ────────────────────────────────────────────────────
+// ── Supabase broadcast ────────────────────────────────────────────────────
 let sbChannel = null;
-
 if (ODA_KODU && SUPABASE_URL && SUPABASE_KEY && window.supabase) {
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   sbChannel = sb.channel('wp-' + ODA_KODU, { config: { broadcast: { self: false } } });
-
   sbChannel
-    .on('broadcast', { event: 'chat' }, ({ payload }) =>
-      appendMsg(payload.user, payload.text, payload.color, false))
-    .on('broadcast', { event: 'emoji' }, ({ payload }) => {
-      _floatEmoji(payload.emoji);
-      appendMsg(payload.user, payload.emoji, payload.color, true);
-    })
-    .on('broadcast', { event: 'not' }, ({ payload }) =>
-      addSharedNote(payload.user, payload.text, payload.time))
-    .on('broadcast', { event: 'video_invite' }, ({ payload }) =>
-      showVideoInvite(payload.from))
-    .subscribe(status => {
+    .on('broadcast', { event: 'chat'  }, ({ payload }) => appendMsg(payload.user, payload.text, payload.color, false))
+    .on('broadcast', { event: 'emoji' }, ({ payload }) => { _floatEmoji(payload.emoji); appendMsg(payload.user, payload.emoji, payload.color, true); })
+    .on('broadcast', { event: 'not'   }, ({ payload }) => addSharedNote(payload.user, payload.text, payload.time))
+    .on('broadcast', { event: 'video_invite' }, ({ payload }) => showVideoInvite(payload.from))
+    .subscribe(st => {
       const dot = document.getElementById('wp-conn-dot');
-      if (!dot) return;
-      dot.className = 'wp-conn-dot ' + (status === 'SUBSCRIBED' ? 'connected' : 'connecting');
+      if (dot) dot.className = 'wp-conn-dot ' + (st === 'SUBSCRIBED' ? 'connected' : 'connecting');
     });
 }
+function broadcast(ev, payload) { if (sbChannel) sbChannel.send({ type: 'broadcast', event: ev, payload }); }
 
-function broadcast(event, payload) {
-  if (sbChannel) sbChannel.send({ type: 'broadcast', event, payload });
+// ── Iframe engel kontrolü (sadece host) ───────────────────────────────────
+if (IS_HOST) {
+  const iframe = document.getElementById('wp-iframe');
+  if (iframe) iframe.addEventListener('load', () => {
+    try {
+      const loc = iframe.contentWindow.location.href;
+      if (loc === 'about:blank') { iframe.style.display = 'none'; document.getElementById('wp-blocked').style.display = 'flex'; }
+    } catch { /* cross-origin = tamam */ }
+  });
 }
 
-// ── Iframe engel kontrolü ─────────────────────────────────────────────────
-const wpIframe = document.getElementById('wp-iframe');
-wpIframe.addEventListener('load', () => {
-  try {
-    const loc = wpIframe.contentWindow.location.href;
-    if (loc === 'about:blank') {
-      wpIframe.style.display = 'none';
-      document.getElementById('wp-blocked').style.display = 'flex';
-    }
-  } catch { /* cross-origin = yüklendi */ }
-});
-
-// ── Davet linki kopyala ───────────────────────────────────────────────────
+// ── Davet linki ───────────────────────────────────────────────────────────
 function copyLink() {
   navigator.clipboard.writeText(INVITE_URL).then(() => {
-    const btn = document.getElementById('copy-text');
-    btn.textContent = 'Kopyalandı ✓';
-    document.getElementById('wp-copy-btn').classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = 'Kopyala';
-      document.getElementById('wp-copy-btn').classList.remove('copied');
-    }, 2500);
+    const t = document.getElementById('copy-text');
+    const b = document.getElementById('wp-copy-btn');
+    t.textContent = 'Kopyalandı ✓';
+    b.classList.add('copied');
+    setTimeout(() => { t.textContent = 'Kopyala'; b.classList.remove('copied'); }, 2500);
   });
 }
 
 // ── Sohbet ────────────────────────────────────────────────────────────────
 const msgBox = document.getElementById('wp-messages');
-
 function sendMsg() {
-  const inp  = document.getElementById('wp-msg-input');
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = '';
-  appendMsg(ME, text, MY_CLR, false);
-  broadcast('chat', { user: ME, text, color: MY_CLR });
+  const inp = document.getElementById('wp-msg-input');
+  const txt = inp.value.trim(); if (!txt) return; inp.value = '';
+  appendMsg(ME, txt, MY_CLR, false);
+  broadcast('chat', { user: ME, text: txt, color: MY_CLR });
 }
-
 function appendMsg(user, text, color, isEmoji) {
   const time = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
   const div  = document.createElement('div');
   div.className = 'wp-msg' + (isEmoji ? ' wp-msg-emoji' : '');
-  div.innerHTML =
-    '<div class="wp-msg-meta">' +
-      '<span class="wp-msg-user" style="color:' + color + '">' + esc(user) + '</span>' +
-      '<span class="wp-msg-time">' + time + '</span>' +
-    '</div>' +
-    '<p class="wp-msg-text">' + esc(text) + '</p>';
+  div.innerHTML = '<div class="wp-msg-meta"><span class="wp-msg-user" style="color:' + color + '">' + esc(user) + '</span><span class="wp-msg-time">' + time + '</span></div><p class="wp-msg-text">' + esc(text) + '</p>';
   msgBox.appendChild(div);
   msgBox.scrollTop = msgBox.scrollHeight;
 }
 
 // ── Emoji ─────────────────────────────────────────────────────────────────
 const floatArea = document.getElementById('wp-emoji-float');
-
-function floatEmoji(emoji) {
-  _floatEmoji(emoji);
-  appendMsg(ME, emoji, MY_CLR, true);
-  broadcast('emoji', { user: ME, emoji, color: MY_CLR });
-}
-
+function floatEmoji(e) { _floatEmoji(e); appendMsg(ME, e, MY_CLR, true); broadcast('emoji', { user: ME, emoji: e, color: MY_CLR }); }
 function _floatEmoji(emoji) {
   const el = document.createElement('span');
-  el.className   = 'wp-floating-emoji';
+  el.className = 'wp-floating-emoji';
   el.textContent = emoji;
-  el.style.left  = (8 + Math.random() * 82) + '%';
+  el.style.left = (8 + Math.random() * 82) + '%';
   el.style.animationDuration = (2.2 + Math.random() * 1.5) + 's';
   floatArea.appendChild(el);
   el.addEventListener('animationend', () => el.remove());
 }
 
-// ── Görüntülü görüşme ─────────────────────────────────────────────────────
+// ── Görüntülü (HOST: sidebar'da açar) ────────────────────────────────────
 let jitsiApi = null;
 
 function toggleVideo() {
+  if (!IS_HOST) return joinVideoCall();
   if (jitsiApi) { stopVideo(); return; }
   broadcast('video_invite', { from: ME });
-  _startVideo();
+  _startHostVideo();
 }
 
-function _startVideo() {
+function _startHostVideo() {
   const panel = document.getElementById('wp-video-panel');
   const btn   = document.getElementById('video-toggle-btn');
-
-  // Önce paneli göster, boyutlar oluştuktan sonra Jitsi'yi başlat
   panel.style.display = 'flex';
   btn.classList.add('active');
-
-  // Panel görünür oldu, şimdi Jitsi'yi başlat (sabit boyutlar)
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const container = document.getElementById('jitsi-container');
-    // Sabit boyutlar — CSS'deki panel yüksekliğiyle eşleştirildi
-    const SIDEBAR_W = document.getElementById('wp-sidebar').offsetWidth || 340;
-    const PANEL_H   = 340; // header(32) çıkarılmış, wp-video-panel 380px
-
-    const init = () => {
-      jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
-        roomName:   JITSI_ROOM,
-        parentNode: container,
-        width:      SIDEBAR_W,
-        height:     PANEL_H,
-        configOverwrite: {
-          prejoinPageEnabled:      false,
-          startWithAudioMuted:     true,
-          startWithVideoMuted:     false,
-          disableDeepLinking:      true,
-          defaultLocalDisplayName: ME,
-          disableThirdPartyRequests: true,
-          analytics:               { disabled: true },
-        },
-        interfaceConfigOverwrite: {
-          TOOLBAR_BUTTONS:                  ['microphone', 'camera', 'hangup'],
-          SHOW_JITSI_WATERMARK:             false,
-          SHOW_BRAND_WATERMARK:             false,
-          TILE_VIEW_MAX_COLUMNS:            2,
-          DEFAULT_BACKGROUND:               '#0A0E1A',
-          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-          HIDE_INVITE_MORE_HEADER:          true,
-        },
-        userInfo: { displayName: ME }
-      });
-
-      jitsiApi.on('videoConferenceJoined', () =>
-        setTimeout(() => jitsiApi.executeCommand('setTileView', true), 400));
-      jitsiApi.on('participantJoined', () =>
-        jitsiApi.executeCommand('setTileView', true));
-      jitsiApi.on('videoConferenceLeft', stopVideo);
-    };
-
-    window.JitsiMeetExternalAPI
-      ? init()
-      : Object.assign(document.head.appendChild(document.createElement('script')),
-          { src: 'https://meet.jit.si/external_api.js', onload: init });
+    const w = document.getElementById('wp-sidebar').offsetWidth || 340;
+    const h = 340;
+    _initJitsi(container, w, h, true); // true = host (ekran paylaşımı butonu var)
   }));
+}
+
+// ── Görüntülü (MİSAFİR: ana alana açar) ──────────────────────────────────
+function joinVideoCall() {
+  if (jitsiApi) return;
+  const placeholder = document.getElementById('wp-guest-placeholder');
+  const mainDiv     = document.getElementById('jitsi-main');
+  const btn         = document.getElementById('video-toggle-btn');
+  if (placeholder) placeholder.style.display = 'none';
+  if (mainDiv)     mainDiv.style.display      = 'block';
+  if (btn)         btn.classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const container = document.getElementById('jitsi-main') || document.getElementById('jitsi-container');
+    const guestArea = document.getElementById('wp-guest-area');
+    const w = (guestArea && guestArea.offsetWidth)  || window.innerWidth  - 340 || 600;
+    const h = (guestArea && guestArea.offsetHeight) || window.innerHeight - 100 || 400;
+    _initJitsi(container, w, h, false); // false = misafir
+  }));
+}
+
+function _initJitsi(container, w, h, isHostMode) {
+  const load = () => {
+    jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
+      roomName:   JITSI_ROOM,
+      parentNode: container,
+      width:  w,
+      height: h,
+      configOverwrite: {
+        prejoinPageEnabled:      false,
+        startWithAudioMuted:     true,
+        startWithVideoMuted:     false,
+        disableDeepLinking:      true,
+        defaultLocalDisplayName: ME,
+        analytics: { disabled: true },
+      },
+      interfaceConfigOverwrite: {
+        TOOLBAR_BUTTONS: isHostMode
+          ? ['microphone', 'camera', 'hangup', 'desktop']  // host: ekran paylaşımı
+          : ['microphone', 'camera', 'hangup'],             // misafir: sadece temel
+        SHOW_JITSI_WATERMARK:             false,
+        SHOW_BRAND_WATERMARK:             false,
+        TILE_VIEW_MAX_COLUMNS:            2,
+        DEFAULT_BACKGROUND:               '#0A0E1A',
+        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+        HIDE_INVITE_MORE_HEADER:          true,
+      },
+      userInfo: { displayName: ME }
+    });
+    jitsiApi.on('videoConferenceJoined', () => setTimeout(() => jitsiApi.executeCommand('setTileView', true), 400));
+    jitsiApi.on('participantJoined',     () => jitsiApi.executeCommand('setTileView', true));
+    jitsiApi.on('videoConferenceLeft', stopVideo);
+  };
+  window.JitsiMeetExternalAPI ? load()
+    : Object.assign(document.head.appendChild(document.createElement('script')), { src: 'https://meet.jit.si/external_api.js', onload: load });
 }
 
 function stopVideo() {
   if (jitsiApi) { jitsiApi.dispose(); jitsiApi = null; }
-  document.getElementById('wp-video-panel').style.display = 'none';
-  document.getElementById('video-toggle-btn').classList.remove('active');
+  const panel = document.getElementById('wp-video-panel');
+  const btn   = document.getElementById('video-toggle-btn');
+  if (panel) panel.style.display = 'none';
+  if (btn)   btn.classList.remove('active');
+  // Misafir: placeholder'ı geri göster
+  if (!IS_HOST) {
+    const ph = document.getElementById('wp-guest-placeholder');
+    const jm = document.getElementById('jitsi-main');
+    if (ph) ph.style.display = '';
+    if (jm) jm.style.display = 'none';
+  }
 }
 
-// Video davet bildirimi
+// ── Video davet bildirimi ─────────────────────────────────────────────────
 function showVideoInvite(from) {
   document.getElementById('inviter-name').textContent = from;
   document.getElementById('wp-video-invite').style.display = 'flex';
-  // 15 sn sonra otomatik kapat
-  setTimeout(() => declineVideo(), 15000);
+  setTimeout(declineVideo, 15000);
 }
-
 function acceptVideo() {
   document.getElementById('wp-video-invite').style.display = 'none';
-  _startVideo();
+  IS_HOST ? _startHostVideo() : joinVideoCall();
 }
+function declineVideo() { document.getElementById('wp-video-invite').style.display = 'none'; }
 
-function declineVideo() {
-  document.getElementById('wp-video-invite').style.display = 'none';
-}
-
-// ── Sidebar toggle (masaüstü + mobil) ────────────────────────────────────
+// ── Sidebar ───────────────────────────────────────────────────────────────
 function toggleSidebar() {
-  const sb      = document.getElementById('wp-sidebar');
-  const overlay = document.getElementById('wp-sidebar-overlay');
-  const isMobile = window.innerWidth <= 768;
-
-  if (isMobile) {
+  const sb = document.getElementById('wp-sidebar');
+  const ov = document.getElementById('wp-sidebar-overlay');
+  if (window.innerWidth <= 768) {
     const open = sb.classList.toggle('mobile-open');
-    overlay.classList.toggle('active', open);
+    ov.classList.toggle('active', open);
     document.body.style.overflow = open ? 'hidden' : '';
   } else {
-    const hidden = sb.style.display === 'none';
-    sb.style.display = hidden ? 'flex' : 'none';
+    sb.style.display = sb.style.display === 'none' ? 'flex' : 'none';
   }
 }
 
 // ── Notlar ────────────────────────────────────────────────────────────────
 const notes = [];
-
 function toggleNotes() {
   const p = document.getElementById('wp-note-panel');
   p.style.display = p.style.display === 'none' ? 'flex' : 'none';
   if (p.style.display === 'flex') document.getElementById('wp-note-ta').focus();
 }
-
 function saveNote() {
-  const ta   = document.getElementById('wp-note-ta');
-  const text = ta.value.trim();
-  if (!text) return;
-  ta.value = '';
+  const ta = document.getElementById('wp-note-ta');
+  const text = ta.value.trim(); if (!text) return; ta.value = '';
   const time = new Date().toLocaleTimeString('tr-TR', {hour:'2-digit', minute:'2-digit'});
   notes.push({user: ME, text, time});
   addSharedNote(ME, text, time);
   broadcast('not', { user: ME, text, time });
 }
-
 function addSharedNote(user, text, time) {
   const el  = document.getElementById('wp-notes-list');
   const div = document.createElement('div');
   div.className = 'wp-note-item';
-  div.innerHTML =
-    '<span class="wp-note-num">' + document.querySelectorAll('.wp-note-item').length + '</span>' +
-    '<div><span class="wp-note-time">' + esc(user) + ' · ' + time + '</span>' +
-    '<p>' + esc(text) + '</p></div>';
+  div.innerHTML = '<span class="wp-note-num">' + document.querySelectorAll('.wp-note-item').length + '</span><div><span class="wp-note-time">' + esc(user) + ' · ' + time + '</span><p>' + esc(text) + '</p></div>';
   el.appendChild(div);
 }
 
-// ── Yardımcı ─────────────────────────────────────────────────────────────
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 </script>
 
 </body>

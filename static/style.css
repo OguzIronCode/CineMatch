@@ -1676,6 +1676,36 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 }
 .wp-invite-decline:hover { color: var(--text); }
 
+/* ── Misafir alanı ── */
+.wp-guest-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  background: var(--bg); position: relative;
+}
+.wp-guest-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 32px; text-align: center; max-width: 380px;
+}
+.wp-guest-emoji  { font-size: 56px; line-height: 1; }
+.wp-guest-title  { font-size: 20px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.02em; }
+.wp-guest-sub    { font-size: 14px; color: var(--text-2); margin: 0; line-height: 1.6; }
+.wp-jitsi-main   { width: 100%; height: 100%; background: #0A0E1A; }
+
+/* ── Host ekran paylaşımı rehberi ── */
+.wp-host-hint {
+  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: rgba(196,150,58,0.12); border: 1px solid var(--gold-strong);
+  border-radius: 10px; padding: 10px 14px;
+  font-size: 13px; color: var(--text-2);
+  max-width: 560px; width: calc(100% - 32px);
+  backdrop-filter: blur(6px); z-index: 5;
+}
+.wp-host-hint strong { color: var(--gold); }
+.wp-hint-close {
+  background: none; border: none; color: var(--text-3); cursor: pointer;
+  font-size: 15px; margin-left: auto; padding: 0 2px; flex-shrink: 0;
+}
+
 /* ── Mobil sidebar overlay ── */
 .wp-sidebar-overlay {
   display: none; position: fixed; inset: 0; z-index: 99;
