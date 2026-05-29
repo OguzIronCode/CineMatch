@@ -1619,19 +1619,22 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 /* Görüntülü görüşme paneli */
 .wp-video-panel {
   display: none; flex-direction: column; flex-shrink: 0;
-  height: 240px; border-bottom: 1px solid var(--border);
-  background: #000;
+  height: 310px; border-bottom: 1px solid var(--border);
+  background: #0A0E1A;
 }
 .wp-video-panel-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 12px; background: var(--surface-2);
+  padding: 7px 12px; background: var(--surface);
   font-size: 12px; font-weight: 600; color: var(--text-2); flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
 }
 .wp-panel-close-btn {
   background: none; border: none; color: var(--text-3);
-  cursor: pointer; font-size: 14px; padding: 2px 6px;
+  cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
+  transition: color 140ms, background 140ms;
 }
-.wp-jitsi-wrap { flex: 1; overflow: hidden; }
+.wp-panel-close-btn:hover { color: var(--text); background: var(--surface-2); }
+.wp-jitsi-wrap { flex: 1; overflow: hidden; background: #0A0E1A; }
 
 /* Aktif buton durumu */
 .wp-action-btn.active {
