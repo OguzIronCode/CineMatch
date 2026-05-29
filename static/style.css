@@ -1574,6 +1574,71 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   .container { padding: 0 16px; }
 }
 
+/* Watch Party başlat butonu (film kartı) */
+.watch-party-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 7px 10px; border-radius: 8px; font-size: 15px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  cursor: pointer; transition: all 140ms ease; flex-shrink: 0;
+}
+.watch-party-btn:hover { border-color: var(--gold); background: var(--gold-soft); transform: scale(1.1); }
+
+/* Oda kodu + davet */
+.wp-room-badge {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-radius: 8px;
+  background: var(--gold-soft); border: 1px solid var(--gold-strong);
+}
+.wp-room-label { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 0.08em; }
+.wp-room-code  { font-size: 13px; font-weight: 800; color: var(--gold); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+
+.wp-invite-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-2); cursor: pointer; transition: all 140ms ease; font-family: inherit;
+}
+.wp-invite-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Bağlantı noktası */
+.wp-conn-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border); transition: background 400ms;
+}
+.wp-conn-dot.connected  { background: var(--success); box-shadow: 0 0 6px rgba(46,158,115,0.5); }
+.wp-conn-dot.connecting { background: var(--gold); animation: pulse 1.2s ease-in-out infinite; }
+
+/* Canlı badge */
+.wp-realtime-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+  color: var(--success); background: rgba(46,158,115,0.1);
+  border: 1px solid rgba(46,158,115,0.3);
+  padding: 2px 7px; border-radius: 10px;
+}
+
+/* Görüntülü görüşme paneli */
+.wp-video-panel {
+  display: none; flex-direction: column; flex-shrink: 0;
+  height: 240px; border-bottom: 1px solid var(--border);
+  background: #000;
+}
+.wp-video-panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: var(--surface-2);
+  font-size: 12px; font-weight: 600; color: var(--text-2); flex-shrink: 0;
+}
+.wp-panel-close-btn {
+  background: none; border: none; color: var(--text-3);
+  cursor: pointer; font-size: 14px; padding: 2px 6px;
+}
+.wp-jitsi-wrap { flex: 1; overflow: hidden; }
+
+/* Aktif buton durumu */
+.wp-action-btn.active {
+  border-color: var(--success); color: var(--success);
+  background: rgba(46,158,115,0.08);
+}
+
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .hero { padding: 64px 0 40px; }

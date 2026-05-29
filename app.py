@@ -2,7 +2,9 @@
 import json
 import os
 import pickle
+import random
 import re
+import string
 import threading
 import time
 import urllib.request
@@ -49,6 +51,17 @@ except ImportError:
 # ---------------------------------------------------------------------------
 YENIDEN_EGITIM_ESIGI = 500
 YENI_CSV = "yeni_ratingler.csv"
+
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+
+# Bellekte oda kaydı (uygulama yeniden başlayınca sıfırlanır)
+ROOMS: dict = {}
+
+def oda_kodu_uret() -> str:
+    while True:
+        kod = "".join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        if kod not in ROOMS:
+            return kod
 
 # ---------------------------------------------------------------------------
 # Startup: load heavy assets once
@@ -698,25 +711,59 @@ def feedback():
     return jsonify({"status": "ok", "total_new": total})
 
 
-@app.route("/izle/<int:movie_id>")
-def izle(movie_id):
+def _izleme_context(movie_id, oda_kodu="", is_host=True):
     movie_row = MOVIES[MOVIES["movieId"] == movie_id]
     if movie_row.empty:
-        return redirect(url_for("oneri"))
+        return None
     title   = movie_row.iloc[0]["title"]
     imdb_id = IMDB_LOOKUP.get(movie_id, "")
     if not imdb_id:
-        return redirect(url_for("oneri"))
+        return None
     detay    = tmdb_detay_getir(movie_id)
     play_url = "https://www.playimdb.com/title/" + imdb_id + "/"
-    return render_template("izleme.html",
+    return dict(
         movie_id=movie_id,
+        oda_kodu=oda_kodu,
+        is_host=is_host,
         title=title,
         play_url=play_url,
         poster=detay["poster"],
         imdb_url=detay["imdb_url"],
         tmdb_url=detay["tmdb_url"],
+        supabase_url=os.getenv("SUPABASE_URL", ""),
+        supabase_anon_key=SUPABASE_ANON_KEY,
     )
+
+
+@app.route("/izle/<int:movie_id>")
+def izle(movie_id):
+    ctx = _izleme_context(movie_id)
+    if not ctx:
+        return redirect(url_for("oneri"))
+    return render_template("izleme.html", **ctx)
+
+
+@app.route("/oda-olustur", methods=["POST"])
+def oda_olustur():
+    data    = request.get_json(silent=True) or {}
+    film_id = data.get("film_id")
+    if not film_id:
+        return jsonify({"status": "hata"}), 400
+    kod = oda_kodu_uret()
+    ROOMS[kod] = {"film_id": int(film_id), "host_id": aktif_kullanici()}
+    url = "/oda/%s/%d" % (kod, int(film_id))
+    return jsonify({"status": "ok", "kod": kod, "url": url})
+
+
+@app.route("/oda/<kod>/<int:movie_id>")
+def oda(kod, movie_id):
+    kod = kod.upper().strip()
+    ROOMS.setdefault(kod, {"film_id": movie_id, "host_id": None})
+    is_host = ROOMS[kod].get("host_id") == aktif_kullanici()
+    ctx = _izleme_context(movie_id, oda_kodu=kod, is_host=is_host)
+    if not ctx:
+        return redirect(url_for("oneri"))
+    return render_template("izleme.html", **ctx)
 
 
 @app.route("/detay/<int:movie_id>")
