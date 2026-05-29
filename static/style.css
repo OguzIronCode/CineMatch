@@ -955,10 +955,9 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 
 /* Sidebar */
 .wp-sidebar {
-  width: 300px; flex-shrink: 0;
+  width: 340px; flex-shrink: 0;
   display: flex; flex-direction: column;
   background: var(--surface); border-left: 1px solid var(--border);
-  transition: width 220ms ease;
 }
 .wp-sidebar-head {
   padding: 14px 16px;
@@ -1618,7 +1617,7 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 /* ── Görüntülü panel ── */
 .wp-video-panel {
   display: none; flex-direction: column; flex-shrink: 0;
-  height: 310px; border-bottom: 1px solid var(--border); background: #0A0E1A;
+  height: 380px; border-bottom: 1px solid var(--border); background: #0A0E1A;
 }
 .wp-video-panel-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -1730,7 +1729,8 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 
 @media (max-width: 480px) {
   .wp-invite-code { font-size: 15px; }
-  .wp-video-panel { height: 220px; }
+  .wp-sidebar { width: 100%; }
+  .wp-video-panel { height: 260px; }
 }
 
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */

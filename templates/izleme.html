@@ -301,18 +301,19 @@ function _startVideo() {
   panel.style.display = 'flex';
   btn.classList.add('active');
 
-  // İki frame bekle — tarayıcı paneli çizsin, offsetHeight dolsun
+  // Panel görünür oldu, şimdi Jitsi'yi başlat (sabit boyutlar)
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const container = document.getElementById('jitsi-container');
-    const w = container.offsetWidth  || 300;
-    const h = container.offsetHeight || 270;
+    // Sabit boyutlar — CSS'deki panel yüksekliğiyle eşleştirildi
+    const SIDEBAR_W = document.getElementById('wp-sidebar').offsetWidth || 340;
+    const PANEL_H   = 340; // header(32) çıkarılmış, wp-video-panel 380px
 
     const init = () => {
       jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
         roomName:   JITSI_ROOM,
         parentNode: container,
-        width:      w,
-        height:     h,
+        width:      SIDEBAR_W,
+        height:     PANEL_H,
         configOverwrite: {
           prejoinPageEnabled:      false,
           startWithAudioMuted:     true,
