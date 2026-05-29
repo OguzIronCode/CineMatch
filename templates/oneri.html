@@ -313,9 +313,6 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
               İzle
             </a>
-            <button class="watch-party-btn" onclick="startParty({{ film.movie_id }},event)" title="Watch Party başlat">
-              🎬
-            </button>
             {% endif %}
           </div>
         </div>
@@ -693,17 +690,6 @@
   function openTrailerFromDetail(movieId, title) {
     closeDetailModal();
     setTimeout(() => openTrailer(movieId, title), 120);
-  }
-
-  async function startParty(movieId, e) {
-    e.stopPropagation();
-    const res  = await fetch('/oda-olustur', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({film_id: movieId})
-    });
-    const data = await res.json();
-    if (data.status === 'ok') window.location.href = data.url;
   }
 
   function escHtmlD(s) {

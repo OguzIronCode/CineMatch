@@ -1574,59 +1574,56 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   .container { padding: 0 16px; }
 }
 
-/* Watch Party başlat butonu (film kartı) */
-.watch-party-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 7px 10px; border-radius: 8px; font-size: 15px;
-  background: var(--surface-2); border: 1px solid var(--border);
-  cursor: pointer; transition: all 140ms ease; flex-shrink: 0;
+/* ── Davet bölümü ── */
+.wp-invite-section {
+  padding: 12px 14px; border-bottom: 1px solid var(--border);
+  background: var(--gold-soft); flex-shrink: 0;
 }
-.watch-party-btn:hover { border-color: var(--gold); background: var(--gold-soft); transform: scale(1.1); }
-
-/* Oda kodu + davet */
-.wp-room-badge {
+.wp-invite-label {
   display: flex; align-items: center; gap: 6px;
-  padding: 5px 10px; border-radius: 8px;
-  background: var(--gold-soft); border: 1px solid var(--gold-strong);
+  font-size: 11px; font-weight: 700; color: var(--gold);
+  text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px;
 }
-.wp-room-label { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: 0.08em; }
-.wp-room-code  { font-size: 13px; font-weight: 800; color: var(--gold); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
-
-.wp-invite-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600;
-  background: var(--surface-2); border: 1px solid var(--border);
-  color: var(--text-2); cursor: pointer; transition: all 140ms ease; font-family: inherit;
+.wp-invite-row {
+  display: flex; align-items: center; gap: 8px;
 }
-.wp-invite-btn:hover { border-color: var(--gold); color: var(--gold); }
+.wp-invite-code {
+  flex: 1; font-family: 'JetBrains Mono', monospace;
+  font-size: 18px; font-weight: 800; color: var(--gold);
+  letter-spacing: 0.18em; min-width: 0;
+}
+.wp-copy-btn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 7px 12px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  background: var(--gold); color: #0A0E1A; border: none;
+  cursor: pointer; font-family: inherit; transition: all 140ms ease; white-space: nowrap;
+}
+.wp-copy-btn:hover { opacity: 0.88; }
+.wp-copy-btn.copied { background: var(--success); }
 
-/* Bağlantı noktası */
+/* ── Bağlantı noktası ── */
 .wp-conn-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--border); transition: background 400ms;
+  width: 8px; height: 8px; border-radius: 50%; background: var(--border); flex-shrink: 0;
 }
-.wp-conn-dot.connected  { background: var(--success); box-shadow: 0 0 6px rgba(46,158,115,0.5); }
+.wp-conn-dot.connected  { background: var(--success); box-shadow: 0 0 5px rgba(46,158,115,0.5); }
 .wp-conn-dot.connecting { background: var(--gold); animation: pulse 1.2s ease-in-out infinite; }
 
-/* Canlı badge */
+/* ── Canlı badge ── */
 .wp-realtime-badge {
   font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
   color: var(--success); background: rgba(46,158,115,0.1);
-  border: 1px solid rgba(46,158,115,0.3);
-  padding: 2px 7px; border-radius: 10px;
+  border: 1px solid rgba(46,158,115,0.3); padding: 2px 7px; border-radius: 10px;
 }
 
-/* Görüntülü görüşme paneli */
+/* ── Görüntülü panel ── */
 .wp-video-panel {
   display: none; flex-direction: column; flex-shrink: 0;
-  height: 310px; border-bottom: 1px solid var(--border);
-  background: #0A0E1A;
+  height: 310px; border-bottom: 1px solid var(--border); background: #0A0E1A;
 }
 .wp-video-panel-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 12px; background: var(--surface);
+  padding: 7px 12px; background: var(--surface); border-bottom: 1px solid var(--border);
   font-size: 12px; font-weight: 600; color: var(--text-2); flex-shrink: 0;
-  border-bottom: 1px solid var(--border);
 }
 .wp-panel-close-btn {
   background: none; border: none; color: var(--text-3);
@@ -1636,10 +1633,95 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 .wp-panel-close-btn:hover { color: var(--text); background: var(--surface-2); }
 .wp-jitsi-wrap { flex: 1; overflow: hidden; background: #0A0E1A; }
 
-/* Aktif buton durumu */
-.wp-action-btn.active {
-  border-color: var(--success); color: var(--success);
-  background: rgba(46,158,115,0.08);
+/* ── Aktif buton ── */
+.wp-action-btn.active { border-color: var(--success); color: var(--success); background: rgba(46,158,115,0.08); }
+
+/* ── Video daveti bildirimi ── */
+.wp-video-invite {
+  position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
+  z-index: 900; min-width: 320px; max-width: 420px; width: 90%;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--gold-strong);
+  border-radius: 14px; padding: 14px 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  animation: slideDown 0.25s ease;
+}
+@keyframes slideDown {
+  from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.wp-video-invite-icon { font-size: 28px; flex-shrink: 0; }
+.wp-video-invite-body { flex: 1; min-width: 0; }
+.wp-video-invite-title { font-size: 13px; font-weight: 600; color: var(--text); margin: 0 0 2px; }
+.wp-video-invite-sub   { font-size: 12px; color: var(--text-2); margin: 0; }
+.wp-video-invite-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.wp-invite-accept {
+  padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 700;
+  background: var(--success); color: #fff; border: none; cursor: pointer; white-space: nowrap;
+  transition: opacity 140ms;
+}
+.wp-invite-accept:hover { opacity: 0.88; }
+.wp-invite-decline {
+  padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  background: transparent; color: var(--text-3); border: 1px solid var(--border);
+  cursor: pointer; white-space: nowrap; transition: all 140ms;
+}
+.wp-invite-decline:hover { color: var(--text); }
+
+/* ── Mobil sidebar overlay ── */
+.wp-sidebar-overlay {
+  display: none; position: fixed; inset: 0; z-index: 99;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(2px);
+}
+.wp-sidebar-toggle-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 8px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  color: var(--text-2); cursor: pointer; transition: all 140ms;
+}
+.wp-sidebar-toggle-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ── Mobil responsive ── */
+@media (max-width: 768px) {
+  .wp-topbar { padding: 0 12px; gap: 8px; }
+  .wp-logo-text, .wp-back-text { display: none; }
+  .wp-film-name { font-size: 13px; }
+  .wp-viewers-badge { display: none; }
+
+  .wp-main { position: relative; }
+
+  .wp-sidebar {
+    position: fixed; bottom: 52px; left: 0; right: 0;
+    width: 100%; height: 65vh; z-index: 100;
+    border-left: none; border-top: 1px solid var(--border);
+    transform: translateY(100%);
+    transition: transform 280ms cubic-bezier(0.16,1,0.3,1);
+    display: flex !important;
+  }
+  .wp-sidebar.mobile-open { transform: translateY(0); }
+  .wp-sidebar-overlay { display: none; }
+  .wp-sidebar.mobile-open ~ #wp-sidebar-overlay,
+  .wp-sidebar-overlay.active { display: block; }
+
+  .wp-bottombar {
+    padding: 0 8px; gap: 2px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .wp-bottombar::-webkit-scrollbar { display: none; }
+  .wp-btn-text { display: none; }
+  .wp-action-btn { padding: 6px 10px; }
+  .wp-emoji-btn  { padding: 4px 5px; font-size: 18px; }
+  .wp-bottom-sep { display: none; }
+
+  .wp-note-panel { left: 12px; right: 12px; bottom: 64px; }
+
+  .wp-video-invite { top: 60px; min-width: unset; }
+  .wp-video-invite-actions { flex-direction: row; }
+}
+
+@media (max-width: 480px) {
+  .wp-invite-code { font-size: 15px; }
+  .wp-video-panel { height: 220px; }
 }
 
 /* ─── Hero ─────────────────────────────────────────────────────────────────── */

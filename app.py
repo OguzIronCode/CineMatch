@@ -737,10 +737,10 @@ def _izleme_context(movie_id, oda_kodu="", is_host=True):
 
 @app.route("/izle/<int:movie_id>")
 def izle(movie_id):
-    ctx = _izleme_context(movie_id)
-    if not ctx:
-        return redirect(url_for("oneri"))
-    return render_template("izleme.html", **ctx)
+    # Otomatik oda oluştur ve oraya yönlendir
+    kod = oda_kodu_uret()
+    ROOMS[kod] = {"film_id": movie_id, "host_id": aktif_kullanici()}
+    return redirect("/oda/%s/%d" % (kod, movie_id))
 
 
 @app.route("/oda-olustur", methods=["POST"])
