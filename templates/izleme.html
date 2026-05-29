@@ -296,41 +296,56 @@ function toggleVideo() {
 function _startVideo() {
   const panel = document.getElementById('wp-video-panel');
   const btn   = document.getElementById('video-toggle-btn');
+
+  // Önce paneli göster, boyutlar oluştuktan sonra Jitsi'yi başlat
   panel.style.display = 'flex';
   btn.classList.add('active');
 
-  const load = () => {
-    jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
-      roomName: JITSI_ROOM,
-      parentNode: document.getElementById('jitsi-container'),
-      width: '100%', height: '100%',
-      configOverwrite: {
-        prejoinPageEnabled:    false,
-        startWithAudioMuted:   true,
-        startWithVideoMuted:   false,
-        disableDeepLinking:    true,
-        defaultLocalDisplayName: ME,
-      },
-      interfaceConfigOverwrite: {
-        TOOLBAR_BUTTONS:        ['microphone', 'camera', 'hangup'],
-        SHOW_JITSI_WATERMARK:   false,
-        SHOW_BRAND_WATERMARK:   false,
-        TILE_VIEW_MAX_COLUMNS:  2,
-        DEFAULT_BACKGROUND:     '#0A0E1A',
-        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-      },
-      userInfo: { displayName: ME }
-    });
-    jitsiApi.on('videoConferenceJoined', () =>
-      setTimeout(() => jitsiApi.executeCommand('setTileView', true), 400));
-    jitsiApi.on('participantJoined', () =>
-      jitsiApi.executeCommand('setTileView', true));
-    jitsiApi.on('videoConferenceLeft', stopVideo);
-  };
+  // İki frame bekle — tarayıcı paneli çizsin, offsetHeight dolsun
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const container = document.getElementById('jitsi-container');
+    const w = container.offsetWidth  || 300;
+    const h = container.offsetHeight || 270;
 
-  window.JitsiMeetExternalAPI ? load() :
-    Object.assign(document.head.appendChild(document.createElement('script')),
-      { src: 'https://meet.jit.si/external_api.js', onload: load });
+    const init = () => {
+      jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
+        roomName:   JITSI_ROOM,
+        parentNode: container,
+        width:      w,
+        height:     h,
+        configOverwrite: {
+          prejoinPageEnabled:      false,
+          startWithAudioMuted:     true,
+          startWithVideoMuted:     false,
+          disableDeepLinking:      true,
+          defaultLocalDisplayName: ME,
+          disableThirdPartyRequests: true,
+          analytics:               { disabled: true },
+        },
+        interfaceConfigOverwrite: {
+          TOOLBAR_BUTTONS:                  ['microphone', 'camera', 'hangup'],
+          SHOW_JITSI_WATERMARK:             false,
+          SHOW_BRAND_WATERMARK:             false,
+          TILE_VIEW_MAX_COLUMNS:            2,
+          DEFAULT_BACKGROUND:               '#0A0E1A',
+          DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
+          HIDE_INVITE_MORE_HEADER:          true,
+        },
+        userInfo: { displayName: ME }
+      });
+
+      jitsiApi.on('videoConferenceJoined', () =>
+        setTimeout(() => jitsiApi.executeCommand('setTileView', true), 400));
+      jitsiApi.on('participantJoined', () =>
+        jitsiApi.executeCommand('setTileView', true));
+      jitsiApi.on('videoConferenceLeft', stopVideo);
+    };
+
+    window.JitsiMeetExternalAPI
+      ? init()
+      : Object.assign(document.head.appendChild(document.createElement('script')),
+          { src: 'https://meet.jit.si/external_api.js', onload: init });
+  }));
 }
 
 function stopVideo() {

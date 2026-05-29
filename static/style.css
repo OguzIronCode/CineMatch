@@ -1631,7 +1631,16 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   transition: color 140ms, background 140ms;
 }
 .wp-panel-close-btn:hover { color: var(--text); background: var(--surface-2); }
-.wp-jitsi-wrap { flex: 1; overflow: hidden; background: #0A0E1A; }
+.wp-jitsi-wrap {
+  flex: 1; overflow: hidden; background: #0A0E1A;
+  min-height: 0; position: relative;
+}
+.wp-jitsi-wrap iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+  display: block;
+}
 
 /* ── Aktif buton ── */
 .wp-action-btn.active { border-color: var(--success); color: var(--success); background: rgba(46,158,115,0.08); }
