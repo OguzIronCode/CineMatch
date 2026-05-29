@@ -1820,28 +1820,49 @@ table.films tbody tr:hover { background: var(--gold-soft); }
   /* Misafir welcome: mobilde göster */
   .wp-guest-welcome { display: flex; }
 
-  /* Sidebar: tam ekrandan çıkmış, alttan kaydırılır */
+  /* Sidebar: alt çekmece */
   .wp-sidebar {
     position: fixed; bottom: 50px; left: 0; right: 0;
-    width: 100% !important; height: 62vh;
+    width: 100% !important;
+    height: 72dvh;                               /* dvh: klavye açılınca güncellenir */
     z-index: 200; border-left: none;
     border-top: 2px solid var(--gold-strong);
     border-radius: 16px 16px 0 0;
-    transform: translateY(calc(100% + 60px));   /* ekrandan tamamen çıkar */
+    transform: translateY(calc(100% + 60px));
     transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
-    display: flex !important;
+    display: flex !important; flex-direction: column; overflow: hidden;
     box-shadow: 0 -8px 32px rgba(0,0,0,0.5);
   }
   .wp-sidebar.mobile-open { transform: translateY(0); }
 
-  /* Sidebar içi handle çubuğu */
+  /* Handle çubuğu */
   .wp-sidebar-head::before {
     content: '';
-    position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-    width: 36px; height: 4px; border-radius: 2px;
-    background: var(--border);
+    position: absolute; top: 7px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 4px; border-radius: 2px; background: var(--border);
   }
-  .wp-sidebar-head { position: relative; padding-top: 18px; }
+  .wp-sidebar-head { position: relative; padding-top: 20px; flex-shrink: 0; }
+
+  /* Mesajlar: kalan alanı doldur, scroll */
+  .wp-messages {
+    flex: 1; overflow-y: auto; min-height: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Input: her zaman altta sabit, sıkışmasın */
+  .wp-msg-input-wrap {
+    flex-shrink: 0;
+    padding: 10px 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  /* Invite section kompakt */
+  .wp-invite-section { flex-shrink: 0; }
+
+  /* Video panel açıkken sidebar'da da görünsün */
+  .wp-video-panel { flex-shrink: 0; height: 200px; }
 
   /* Overlay arkaplanı */
   .wp-sidebar-overlay { display: block; opacity: 0; pointer-events: none; transition: opacity 300ms; }
