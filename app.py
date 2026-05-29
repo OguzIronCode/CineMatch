@@ -52,7 +52,7 @@ except ImportError:
 YENIDEN_EGITIM_ESIGI = 500
 YENI_CSV = "yeni_ratingler.csv"
 
-SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", os.getenv("SUPABASE_KEY", ""))
 
 # Bellekte oda kaydı (uygulama yeniden başlayınca sıfırlanır)
 ROOMS: dict = {}
