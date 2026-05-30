@@ -49,13 +49,13 @@
     <!-- ORTA: Film (herkes için) -->
     <div class="wp-player-col">
       <div class="wp-player-wrap">
-        <!-- Guest: iframe başta gizli, host başlatınca açılır -->
+        <!-- iframe başta boş — host "Filmi Başlat"a basınca yüklenir -->
         <iframe id="wp-iframe"
-                src="{{ play_url if is_host else '' }}"
+                src=""
                 data-src="{{ play_url }}"
                 frameborder="0" allowfullscreen
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                {% if not is_host %}style="display:none"{% endif %}></iframe>
+                style="display:none"></iframe>
 
         <div class="wp-blocked" id="wp-blocked" style="display:none">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.3"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
@@ -233,20 +233,28 @@ const PALETTE      = ['#C4963A','#3DAF84','#6B96D6','#9070D0','#C96060','#3EA5BE
 const MY_CLR       = PALETTE[[...ME].reduce((a,c)=>a+c.charCodeAt(0),0) % PALETTE.length];
 const JITSI_ROOM   = 'CineMatch-' + (ODA_KODU || 'Solo' + MOVIE_ID);
 
-// ── Supabase broadcast ────────────────────────────────────────────────────
+// ── Supabase broadcast + presence ────────────────────────────────────────
 let sbChannel = null;
 if (ODA_KODU && SUPABASE_URL && SUPABASE_KEY && window.supabase) {
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  sbChannel = sb.channel('wp-' + ODA_KODU, { config: { broadcast: { self: false } } });
+  sbChannel = sb.channel('wp-' + ODA_KODU, {
+    config: { broadcast: { self: false }, presence: { key: ME } }
+  });
   sbChannel
     .on('broadcast', { event: 'chat'  }, ({ payload }) => appendMsg(payload.user, payload.text, payload.color, false))
     .on('broadcast', { event: 'emoji' }, ({ payload }) => { _floatEmoji(payload.emoji); appendMsg(payload.user, payload.emoji, payload.color, true); })
     .on('broadcast', { event: 'not'   }, ({ payload }) => addSharedNote(payload.user, payload.text, payload.time))
     .on('broadcast', { event: 'video_invite' }, ({ payload }) => showVideoInvite(payload.from))
     .on('broadcast', { event: 'film_baslat'  }, () => guestFilmBaslat())
+    .on('presence', { event: 'sync' }, () => {
+      const count = Object.keys(sbChannel.presenceState()).length;
+      const el = document.getElementById('viewer-count');
+      if (el) el.textContent = count;
+    })
     .subscribe(st => {
       const dot = document.getElementById('wp-conn-dot');
       if (dot) dot.className = 'wp-conn-dot ' + (st === 'SUBSCRIBED' ? 'connected' : 'connecting');
+      if (st === 'SUBSCRIBED') sbChannel.track({ user: ME, joined_at: Date.now() });
     });
 }
 function broadcast(ev, pl) { if (sbChannel) sbChannel.send({ type: 'broadcast', event: ev, payload: pl }); }
@@ -266,6 +274,11 @@ if (wpIframe) wpIframe.addEventListener('load', () => {
 function hostStartFilm() {
   const overlay = document.getElementById('wp-start-overlay');
   if (overlay) overlay.style.display = 'none';
+  const iframe = document.getElementById('wp-iframe');
+  if (iframe) {
+    const src = iframe.getAttribute('data-src');
+    if (src) { iframe.src = src; iframe.style.display = ''; }
+  }
   broadcast('film_baslat', {});
   appendMsg('Sistem', 'Film başlatıldı 🎬', '#C4963A', false);
 }
@@ -345,10 +358,8 @@ function _floatEmoji(emoji) {
 
 // ── Görüntülü görüşme (sağ sidebar'da) ───────────────────────────────────
 let jitsiApi = null;
-function toggleVideo() {
-  if (jitsiApi) { stopVideo(); return; }
-  broadcast('video_invite', { from: ME });
-  // Sidebar'ı aç (görüntülü orada)
+
+function _startVideo() {
   const sb = document.getElementById('wp-sidebar');
   if (sb && window.innerWidth <= 768 && !sb.classList.contains('mobile-open')) {
     sb.classList.add('mobile-open');
@@ -361,9 +372,14 @@ function toggleVideo() {
   requestAnimationFrame(() => requestAnimationFrame(() => {
     const container = document.getElementById('jitsi-container');
     const sw = document.getElementById('wp-sidebar').offsetWidth || 340;
-    const sh = 340;
-    _initJitsi(container, sw, sh);
+    _initJitsi(container, sw, 340);
   }));
+}
+
+function toggleVideo() {
+  if (jitsiApi) { stopVideo(); return; }
+  broadcast('video_invite', { from: ME });
+  _startVideo();
 }
 
 function _initJitsi(container, w, h) {
@@ -407,7 +423,7 @@ function showVideoInvite(from) {
   document.getElementById('wp-video-invite').style.display = 'flex';
   setTimeout(declineVideo, 15000);
 }
-function acceptVideo() { document.getElementById('wp-video-invite').style.display = 'none'; toggleVideo(); }
+function acceptVideo() { document.getElementById('wp-video-invite').style.display = 'none'; _startVideo(); }
 function declineVideo() { document.getElementById('wp-video-invite').style.display = 'none'; }
 
 // ── Sidebar ───────────────────────────────────────────────────────────────
