@@ -262,6 +262,7 @@ function broadcast(ev, pl) { if (sbChannel) sbChannel.send({ type: 'broadcast', 
 // ── Iframe engel kontrolü ─────────────────────────────────────────────────
 const wpIframe = document.getElementById('wp-iframe');
 if (wpIframe) wpIframe.addEventListener('load', () => {
+  if (!wpIframe.src || wpIframe.src === 'about:blank') return; // boş src'yi atla
   try {
     if (wpIframe.contentWindow.location.href === 'about:blank') {
       wpIframe.style.display = 'none';
@@ -274,10 +275,11 @@ if (wpIframe) wpIframe.addEventListener('load', () => {
 function hostStartFilm() {
   const overlay = document.getElementById('wp-start-overlay');
   if (overlay) overlay.style.display = 'none';
+  document.getElementById('wp-blocked').style.display = 'none';
   const iframe = document.getElementById('wp-iframe');
   if (iframe) {
     const src = iframe.getAttribute('data-src');
-    if (src) { iframe.src = src; iframe.style.display = ''; }
+    if (src) { iframe.style.display = ''; iframe.src = src; }
   }
   broadcast('film_baslat', {});
   appendMsg('Sistem', 'Film başlatıldı 🎬', '#C4963A', false);
@@ -290,9 +292,10 @@ function guestFilmBaslat() {
   const iframe   = document.getElementById('wp-iframe');
   if (waitOvl)    waitOvl.style.display   = 'none';
   if (welcomeOvl) welcomeOvl.style.display = 'none';
+  document.getElementById('wp-blocked').style.display = 'none';
   if (iframe) {
     const src = iframe.getAttribute('data-src');
-    if (src) { iframe.src = src; iframe.style.display = ''; }
+    if (src) { iframe.style.display = ''; iframe.src = src; }
   }
   appendMsg('Sistem', 'Film başladı — birlikte izliyorsunuz 🎬', '#C4963A', false);
 }
