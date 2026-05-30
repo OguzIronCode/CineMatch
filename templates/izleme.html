@@ -287,12 +287,12 @@ function hostStartFilm() {
 
 // ── GUEST: Film başlatma sinyali geldi ────────────────────────────────────
 function guestFilmBaslat() {
-  const waitOvl  = document.getElementById('wp-wait-overlay');
+  const waitOvl    = document.getElementById('wp-wait-overlay');
   const welcomeOvl = document.getElementById('wp-guest-welcome');
-  const iframe   = document.getElementById('wp-iframe');
-  if (waitOvl)    waitOvl.style.display   = 'none';
+  if (waitOvl)    waitOvl.style.display    = 'none';
   if (welcomeOvl) welcomeOvl.style.display = 'none';
   document.getElementById('wp-blocked').style.display = 'none';
+  const iframe = document.getElementById('wp-iframe');
   if (iframe) {
     const src = iframe.getAttribute('data-src');
     if (src) { iframe.style.display = ''; iframe.src = src; }
@@ -390,21 +390,28 @@ function _initJitsi(container, w, h) {
     jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
       roomName: JITSI_ROOM, parentNode: container, width: w, height: h,
       configOverwrite: {
-        prejoinPageEnabled: false, startWithAudioMuted: true,
-        startWithVideoMuted: false, disableDeepLinking: true,
-        defaultLocalDisplayName: ME, analytics: { disabled: true },
+        prejoinPageEnabled: false,
+        startWithAudioMuted: true,
+        startWithVideoMuted: false,
+        disableDeepLinking: true,
+        disableSelfView: true,
+        disableSelfViewSettings: true,
+        startSilent: false,
+        defaultLocalDisplayName: ME,
+        analytics: { disabled: true },
       },
       interfaceConfigOverwrite: {
-        TOOLBAR_BUTTONS: IS_HOST
-          ? ['microphone', 'camera', 'hangup', 'desktop']
-          : ['microphone', 'camera', 'hangup'],
+        TOOLBAR_BUTTONS: ['microphone', 'camera', 'hangup'],
         SHOW_JITSI_WATERMARK: false, SHOW_BRAND_WATERMARK: false,
-        TILE_VIEW_MAX_COLUMNS: 2, DEFAULT_BACKGROUND: '#0A0E1A',
+        TILE_VIEW_MAX_COLUMNS: 1, DEFAULT_BACKGROUND: '#0A0E1A',
         DISABLE_JOIN_LEAVE_NOTIFICATIONS: true, HIDE_INVITE_MORE_HEADER: true,
+        FILM_STRIP_MAX_HEIGHT: 120,
       },
       userInfo: { displayName: ME }
     });
-    jitsiApi.on('videoConferenceJoined', () => setTimeout(() => jitsiApi.executeCommand('setTileView', true), 400));
+    jitsiApi.on('videoConferenceJoined', () => {
+      setTimeout(() => jitsiApi.executeCommand('setTileView', true), 600);
+    });
     jitsiApi.on('participantJoined', () => jitsiApi.executeCommand('setTileView', true));
     jitsiApi.on('videoConferenceLeft', stopVideo);
   };
