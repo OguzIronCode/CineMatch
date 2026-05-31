@@ -179,9 +179,10 @@
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
       <span class="wp-btn-text">Görüntülü</span>
     </button>
-    <button class="wp-action-btn" onclick="toggleNotes()">
+    <button class="wp-action-btn" id="note-toggle-btn" onclick="toggleNotes()" style="position:relative">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      <span class="wp-btn-text">Not Al</span>
+      <span class="wp-btn-text">Notlar</span>
+      <span id="note-count-badge" style="display:none;position:absolute;top:2px;right:2px;background:var(--gold);color:#000;font-size:9px;font-weight:700;border-radius:8px;padding:1px 5px;line-height:1.4">0</span>
     </button>
     {% if imdb_url %}
     <a href="{{ imdb_url }}" target="_blank" rel="noopener" class="wp-action-btn">
@@ -208,13 +209,34 @@
 
 <!-- Not paneli -->
 <div class="wp-note-panel" id="wp-note-panel" style="display:none">
+  <!-- Başlık -->
   <div class="wp-note-head">
-    <span>📝 Notlar</span>
+    <span>📝 Notlar <span id="note-panel-count" style="font-size:11px;color:var(--text-2);font-weight:400"></span></span>
     <button onclick="toggleNotes()">✕</button>
   </div>
-  <textarea class="wp-note-ta" id="wp-note-ta" placeholder="Bu sahne hakkında not al…" rows="3"></textarea>
-  <button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="saveNote()">Kaydet</button>
-  <div class="wp-notes-list" id="wp-notes-list"></div>
+
+  <!-- Yazma alanı -->
+  <div class="wp-note-write-section">
+    <textarea class="wp-note-ta" id="wp-note-ta" placeholder="Bu sahne hakkında not al…" rows="3"></textarea>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;font-size:13px" onclick="saveNote()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Kaydet
+    </button>
+  </div>
+
+  <!-- Ayırıcı + kayıt başlığı -->
+  <div style="display:flex;align-items:center;gap:8px;margin:12px 0 8px">
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+    <span style="font-size:11px;color:var(--text-2);white-space:nowrap;letter-spacing:0.05em;text-transform:uppercase">Kayıtlar</span>
+    <div style="flex:1;height:1px;background:var(--border)"></div>
+  </div>
+
+  <!-- Notlar listesi -->
+  <div class="wp-notes-list" id="wp-notes-list">
+    <div id="wp-notes-empty" style="text-align:center;color:var(--text-3);font-size:12px;padding:16px 0">
+      Henüz not yok — izlerken not almaya başla.
+    </div>
+  </div>
 </div>
 
 <!-- Mobil overlay -->
@@ -464,11 +486,31 @@ function saveNote() {
   broadcast('not', { user: ME, text, time });
 }
 function addSharedNote(user, text, time) {
-  const el  = document.getElementById('wp-notes-list');
+  const list  = document.getElementById('wp-notes-list');
+  const empty = document.getElementById('wp-notes-empty');
+  if (empty) empty.style.display = 'none';
+
+  const idx = notes.length;
   const div = document.createElement('div');
   div.className = 'wp-note-item';
-  div.innerHTML = '<span class="wp-note-num">' + document.querySelectorAll('.wp-note-item').length + '</span><div><span class="wp-note-time">' + esc(user) + ' · ' + time + '</span><p>' + esc(text) + '</p></div>';
-  el.appendChild(div);
+  div.innerHTML =
+    '<span class="wp-note-num">' + idx + '</span>' +
+    '<div style="flex:1;min-width:0">' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">' +
+        '<span style="font-size:11px;font-weight:600;color:' + MY_CLR + '">' + esc(user) + '</span>' +
+        '<span class="wp-note-time">' + time + '</span>' +
+      '</div>' +
+      '<p style="margin:0;font-size:12px;color:var(--text);line-height:1.5;word-break:break-word">' + esc(text) + '</p>' +
+    '</div>';
+  list.appendChild(div);
+  list.scrollTop = list.scrollHeight;
+
+  // Sayaçları güncelle
+  const total = document.querySelectorAll('.wp-note-item').length;
+  const badge = document.getElementById('note-count-badge');
+  const panelCount = document.getElementById('note-panel-count');
+  if (badge) { badge.textContent = total; badge.style.display = 'block'; }
+  if (panelCount) panelCount.textContent = '(' + total + ' not)';
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

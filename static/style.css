@@ -1047,31 +1047,44 @@ table.films tbody tr:hover { background: var(--gold-soft); }
 /* Not paneli */
 .wp-note-panel {
   position: fixed; bottom: 64px; right: 320px; z-index: 500;
-  width: 300px; background: var(--surface);
+  width: 320px; max-height: 520px; background: var(--surface);
   border: 1px solid var(--border); border-radius: 12px;
   box-shadow: 0 16px 40px rgba(0,0,0,0.5);
-  flex-direction: column; padding: 16px; gap: 10px;
+  flex-direction: column; padding: 16px; gap: 0;
+  overflow: hidden;
 }
+.wp-note-write-section { display: flex; flex-direction: column; gap: 0; }
 .wp-note-head {
   display: flex; justify-content: space-between; align-items: center;
-  font-size: 14px; font-weight: 700;
+  font-size: 14px; font-weight: 700; margin-bottom: 12px;
 }
 .wp-note-head button { background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 16px; }
 .wp-note-ta {
   width: 100%; background: var(--surface-2); border: 1px solid var(--border);
   border-radius: 8px; padding: 10px; font-size: 13px; color: var(--text);
-  font-family: inherit; resize: none; outline: none;
+  font-family: inherit; resize: none; outline: none; box-sizing: border-box;
 }
 .wp-note-ta:focus { border-color: var(--gold); }
-.wp-notes-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; max-height: 200px; overflow-y: auto; }
-.wp-note-item { display: flex; gap: 10px; align-items: flex-start; }
+.wp-notes-list {
+  display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto; flex: 1;
+  max-height: 240px;
+  padding-right: 4px;
+}
+.wp-notes-list::-webkit-scrollbar { width: 4px; }
+.wp-notes-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+.wp-note-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px;
+}
 .wp-note-num {
-  min-width: 20px; height: 20px; border-radius: 50%;
+  min-width: 22px; height: 22px; border-radius: 50%;
   background: var(--gold-soft); border: 1px solid var(--gold-strong);
   color: var(--gold); font-size: 10px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.wp-note-time { font-size: 10px; color: var(--text-3); display: block; margin-bottom: 2px; }
+.wp-note-time { font-size: 10px; color: var(--text-3); }
 .wp-note-item p { font-size: 12px; color: var(--text-2); margin: 0; line-height: 1.5; }
 
 @media (max-width: 768px) {
