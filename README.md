@@ -1,6 +1,6 @@
 # CineMatch — Akıllı Film Öneri Sistemi
 
-CineMatch, MovieLens ml-32m veri seti üzerinde eğitilmiş üç farklı makine öğrenmesi algoritmasını kullanan kişiselleştirilmiş film öneri platformudur. Flask tabanlı web arayüzü ve Supabase kimlik doğrulama altyapısıyla tam yığın bir uygulama olarak geliştirilmiştir.
+CineMatch, MovieLens ml-32m veri seti üzerinde eğitilmiş üç farklı makine öğrenmesi algoritmasını kullanan kişiselleştirilmiş film öneri platformudur. Flask tabanlı web arayüzü, Supabase kimlik doğrulama altyapısı ve gerçek zamanlı Watch Party özelliğiyle tam yığın bir uygulama olarak geliştirilmiştir.
 
 ---
 
@@ -10,6 +10,7 @@ CineMatch, MovieLens ml-32m veri seti üzerinde eğitilmiş üç farklı makine 
 - [Teknoloji Yığını](#teknoloji-yığını)
 - [Sistem Mimarisi](#sistem-mimarisi)
 - [Öneri Algoritmaları](#öneri-algoritmaları)
+- [Watch Party](#watch-party)
 - [Veri Pipeline'ı](#veri-pipelineı)
 - [Kurulum](#kurulum)
 - [Yapılandırma](#yapılandırma)
@@ -22,12 +23,15 @@ CineMatch, MovieLens ml-32m veri seti üzerinde eğitilmiş üç farklı makine 
 
 ## Özellikler
 
-- **3 Farklı Öneri Algoritması** — KNN (cosine similarity), Karar Ağacı ve Naive Bayes ile farklı yaklaşımlar
+- **3 Farklı Öneri Algoritması** — KNN (cosine similarity), Karar Ağacı ve Naive Bayes
+- **Watch Party** — Arkadaşlarla birlikte film izleme odası; Supabase Presence ile canlı izleyici sayısı, gerçek zamanlı sohbet, emoji ve Jitsi görüntülü görüşme
 - **Kullanıcı Kimlik Doğrulama** — Supabase üzerinden kayıt, giriş ve şifre sıfırlama
-- **Film Kütüphanesi** — Beğenilen filmleri kaydet ve kişisel koleksiyon oluştur
-- **Öneri Geçmişi** — Yapılan tüm öneri sorgularının kaydı ve istatistikleri
+- **Film Kütüphanesi** — Beğenilen filmleri kaydet, detay modalından izle ve kaldır
+- **Dashboard** — Kaydedilen filmler, öneri geçmişi ve Chart.js istatistik grafikleri; film kartlarına tıklayarak açıklama, yönetmen, oyuncu bilgilerini gör
+- **Öneri Geçmişi** — Yapılan tüm öneri sorgularının kaydı, sıralama ve algoritma filtresi
 - **Canlı Arama** — Film veritabanında anlık otomatik tamamlama
-- **TMDB Entegrasyonu** — Film afişleri, açıklamalar ve YouTube fragmanları
+- **TMDB Entegrasyonu** — Film afişleri, açıklamalar, backdrop görseller ve YouTube fragmanları
+- **Film Detay Modali** — Her film için tam ekran detay görünümü: özet, oyuncular, yönetmen, fragman ve izleme bağlantısı
 - **Dinamik Yeniden Eğitim** — 500 yeni kullanıcı puanı biriktikçe arka planda model güncelleme
 - **Veri Analizi Sayfası** — Veri seti üzerinde keşifsel veri analizi ve interaktif grafikler
 - **Karanlık Tema** — Özel tasarım sistemi, Bootstrap kullanılmayan sıfırdan CSS
@@ -42,6 +46,8 @@ CineMatch, MovieLens ml-32m veri seti üzerinde eğitilmiş üç farklı makine 
 | ML / Veri | scikit-learn 1.3+, pandas 2.1+, SciPy 1.11+ |
 | Frontend | HTML5, Jinja2, Vanilla JS, Chart.js 4.4.3 |
 | Veritabanı | Supabase (PostgreSQL) |
+| Gerçek Zamanlı | Supabase Broadcast + Presence |
+| Görüntülü Görüşme | Jitsi Meet External API |
 | Kimlik Doğrulama | Supabase Auth |
 | Harici API | TMDB (The Movie Database) |
 | Dağıtım | Render.com, Gunicorn 21.2+ |
@@ -56,7 +62,7 @@ Kullanıcı İsteği
       ▼
 ┌─────────────────────────────────────┐
 │          Flask Uygulaması           │
-│  app.py — 842 satır, 18 endpoint    │
+│  app.py — 22 endpoint               │
 │                                     │
 │  ┌──────────┐  ┌──────────────────┐ │
 │  │  Session │  │  Threading Lock  │ │
@@ -72,9 +78,9 @@ Kullanıcı İsteği
 │Supabase│     │    ML Model Katmanı    │
 │  Auth  │     │                        │
 │  DB    │     │  knn_model.pkl (54 MB) │
-└────────┘     │  matrix_df.pkl (54 MB) │
-               │  dt_model.pkl          │
-               │  nb_model.pkl          │
+│Broadcast│    │  matrix_df.pkl (54 MB) │
+│Presence│     │  dt_model.pkl          │
+└────────┘     │  nb_model.pkl          │
                │  film_havuzu.pkl       │
                └────────────┬───────────┘
                             │
@@ -130,6 +136,48 @@ if new_ratings_count >= RETRAIN_THRESHOLD:
 ```
 
 Yeni puanlar `yeni_ratingler.csv` içinde toplanır, mevcut eğitim verisine eklenir, tekrarlananlar kaldırılır ve KNN modeli arka planda yeniden eğitilir.
+
+---
+
+## Watch Party
+
+Arkadaşlarla eş zamanlı film izleme odası. Her oda 6 haneli benzersiz bir kodla tanımlanır.
+
+### Nasıl Çalışır
+
+1. **Oda Oluşturma** — Öneri sayfasındaki "İzle" butonuna tıklayarak otomatik oda oluşturulur ve `HOST` rolü atanır.
+2. **Misafir Katılımı** — Oda kodu veya davet linki paylaşılır; misafir `/oda/<kod>/<movie_id>` URL'sine girer.
+3. **Film Başlatma** — Yalnızca host "Filmi Başlat" butonuna basabilir; sinyal Supabase Broadcast ile tüm misafirlere iletilir ve film eş zamanlı açılır.
+4. **İzleyici Sayısı** — Supabase Presence ile odadaki aktif kullanıcı sayısı anlık olarak güncellenir.
+
+### Özellikler
+
+| Özellik | Açıklama |
+|---------|----------|
+| Gerçek Zamanlı Sohbet | Supabase Broadcast kanalı üzerinden anlık mesajlaşma |
+| Emoji Tepkileri | 7 farklı emoji; ekranda yükselen animasyonlu efekt |
+| İzleyici Sayısı | Supabase Presence ile bağlı kullanıcı sayısı |
+| Görüntülü Görüşme | Jitsi Meet — sadece kamera, kendi görüntün gizli (`disableSelfView: true`) |
+| Video Davet | Görüntülü başlatınca karşı tarafa bildirim gider; 15 saniye kabul süresi |
+| Not Alma | Film izlerken anlık not; Broadcast ile odadaki herkese paylaşılır |
+| Davet Linki | Tek tıkla kopyalanabilen oda URL'si |
+| Mobil Destek | Tam ekran butonu, kaydırılabilir sidebar, overlay menü |
+
+### Watch Party Mimarisi
+
+```
+Host                    Supabase Broadcast              Guest
+  │                           │                           │
+  │── film_baslat ──────────► │ ──────────────────────► │
+  │                           │                 iframe.src = play_url
+  │── chat ────────────────►  │ ──────────────────────► │
+  │── emoji ───────────────►  │ ──────────────────────► │
+  │── not ─────────────────►  │ ──────────────────────► │
+  │── video_invite ────────►  │ ──────────────────────► │
+  │                           │                           │
+  │◄──────────────────────── Presence Sync ─────────────►│
+  │         (izleyici sayısı güncellenir)                 │
+```
 
 ---
 
@@ -200,10 +248,10 @@ source venv/bin/activate
 # 3. Bağımlılıkları yükle
 pip install -r requirements.txt
 
-# 4. Ortam değişkenlerini yapılandır (aşağıya bak)
+# 4. Ortam değişkenlerini yapılandır
 cp .env.example .env
 
-# 5. Ortalama puanları ön hesapla (opsiyonel, avg_rating.pkl yoksa)
+# 5. Ortalama puanları ön hesapla (avg_rating.pkl yoksa)
 python precompute.py
 
 # 6. Uygulamayı başlat
@@ -222,6 +270,9 @@ Proje kök dizininde `.env` dosyası oluştur:
 FLASK_SECRET_KEY=guclu-ve-rastgele-bir-anahtar
 SUPABASE_URL=https://<proje-id>.supabase.co
 SUPABASE_KEY=<supabase-anon-public-key>
+SUPABASE_ANON_KEY=<supabase-anon-public-key>
+TMDB_API_KEY=<tmdb-api-anahtarin>
+ALLOWED_ORIGIN=http://localhost:5000
 ```
 
 | Değişken | Açıklama |
@@ -229,8 +280,9 @@ SUPABASE_KEY=<supabase-anon-public-key>
 | `FLASK_SECRET_KEY` | Flask oturum şifrelemesi için gizli anahtar |
 | `SUPABASE_URL` | Supabase proje URL'si |
 | `SUPABASE_KEY` | Supabase anonim/public anahtar |
-
-**TMDB API Anahtarı** `app.py` içinde `TMDB_API_KEY` sabitiyle tanımlanmıştır. Kendi anahtarınla değiştirmek için [themoviedb.org](https://www.themoviedb.org/settings/api) adresinden ücretsiz hesap oluştur.
+| `SUPABASE_ANON_KEY` | Watch Party Broadcast/Presence için client-side anahtar |
+| `TMDB_API_KEY` | TMDB API anahtarı — [themoviedb.org](https://www.themoviedb.org/settings/api) |
+| `ALLOWED_ORIGIN` | CORS için izin verilen kaynak(lar), virgülle ayrılır |
 
 ---
 
@@ -246,6 +298,8 @@ SUPABASE_KEY=<supabase-anon-public-key>
 | GET | `/dashboard` | Kullanıcı panosu (auth gerekli) |
 | GET | `/gecmis` | Öneri geçmişi (auth gerekli) |
 | GET | `/profil` | Kullanıcı profili (auth gerekli) |
+| GET | `/izle/<movie_id>` | Oda oluştur ve Watch Party'e yönlendir |
+| GET | `/oda/<kod>/<movie_id>` | Watch Party odası |
 | POST | `/kayit` | Kullanıcı kaydı |
 | POST | `/giris` | Kullanıcı girişi |
 | GET | `/cikis` | Çıkış yap |
@@ -255,13 +309,15 @@ SUPABASE_KEY=<supabase-anon-public-key>
 
 | Metod | Endpoint | Gövde / Parametreler | Yanıt |
 |-------|----------|----------------------|-------|
-| GET | `/ara?q=<sorgu>` | `q`: min 2 karakter | `[{movieId, title, year}, ...]` |
+| GET | `/ara?q=<sorgu>` | `q`: min 2 karakter | `[{movie_id, title, genres}]` |
+| GET | `/detay/<movie_id>` | — | Film detayı: özet, oyuncular, yönetmen, backdrop |
 | GET | `/trailer/<movie_id>` | — | `{key: "youtube_video_key"}` |
-| POST | `/feedback` | `{movie_id, rating, session_id}` | `{success, retrain_triggered}` |
-| POST | `/kaydet` | `{movie_id, title, genres, ...}` | `{success, message}` |
-| POST | `/kaydet-kaldir` | `{movie_id}` | `{success, message}` |
-| POST | `/gecmis-temizle` | — | `{success}` |
-| GET | `/sistem-durumu` | — | `{yeni_puan_sayisi, egitim_durumu, ...}` |
+| POST | `/oda-olustur` | `{film_id}` | `{status, kod, url}` |
+| POST | `/feedback` | `{movie_id, rating, session_id}` | `{status, total_new}` |
+| POST | `/kaydet` | `{movie_id, title, genres, ...}` | `{status}` |
+| POST | `/kaydet-kaldir` | `{movie_id}` | `{status}` |
+| POST | `/gecmis-temizle` | — | `{status}` |
+| GET | `/sistem-durumu` | — | `{toplam_rating, yeni_rating, egitiliyor, ...}` |
 
 ---
 
@@ -316,22 +372,23 @@ CREATE TABLE begeni_bildirimleri (
 
 ```
 CineMatch/
-├── app.py                  # Ana Flask uygulaması (18 endpoint, 842 satır)
+├── app.py                  # Ana Flask uygulaması (22 endpoint)
 ├── precompute.py           # Ortalama puan ön hesaplama yardımcısı
 ├── requirements.txt        # Python bağımlılıkları
 ├── render.yaml             # Render.com dağıtım yapılandırması
 ├── .env                    # Ortam değişkenleri (commit edilmez)
 │
 ├── static/
-│   ├── style.css           # Özel karanlık tema tasarım sistemi (1200+ satır)
+│   ├── style.css           # Özel karanlık tema tasarım sistemi
 │   └── poster_yok.svg      # Afiş bulunamadığında yer tutucu görseli
 │
 ├── templates/
 │   ├── _nav.html           # Navigasyon bileşeni
 │   ├── _footer.html        # Alt bilgi bileşeni
 │   ├── index.html          # Ana sayfa — hero ve özellikler
-│   ├── oneri.html          # Öneri sayfası — ana özellik
-│   ├── dashboard.html      # Kullanıcı panosu — sekmeli arayüz
+│   ├── oneri.html          # Öneri sayfası — film kartları, detay ve fragman modali
+│   ├── izleme.html         # Watch Party — film + sohbet + Jitsi görüntülü görüşme
+│   ├── dashboard.html      # Kullanıcı panosu — film kartları, detay modali, istatistikler
 │   ├── analiz.html         # EDA ve veri görselleştirme
 │   ├── gecmis.html         # Öneri geçmişi listesi
 │   ├── profil.html         # Profil yönetimi
@@ -380,6 +437,7 @@ services:
 - Tek Gunicorn worker — sınırlı eşzamanlı istek
 - Geçici dosya sistemi — yeniden dağıtımda `yeni_ratingler.csv` sıfırlanır
 - Model dosyaları (`.pkl`) boyutu nedeniyle Git'e commit edilmez; dağıtımda mevcut olmaları gerekir
+- Watch Party oda kayıtları (`ROOMS` dict) uygulama yeniden başlayınca sıfırlanır
 
 ---
 
