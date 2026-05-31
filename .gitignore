@@ -10,3 +10,5 @@ temiz_orneklem.csv
 yeni_ratingler.csv
 # Geçici araç script
 precompute.py
+# Claude dahili bellek dosyaları
+memory/
